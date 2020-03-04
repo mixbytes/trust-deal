@@ -1,0 +1,32 @@
+{
+  "name": "trust-deal",
+  "version": "0.0.1",
+  "description": "todo",
+  "main": "",
+  "scripts": {
+    "test": "npx truffle test"
+  },
+  "dependencies": {
+    "diff": "4.0.1",
+    "mem": "5.1.1",
+    "chai": "4.2.0",
+    "openzeppelin-solidity": "2.4.0",
+    "openzeppelin-test-helpers": "0.5.1",
+    "solidity-docgen": "0.1.1",
+    "dotenv": "8.2.0",
+    "truffle": "5.0.42",
+    "truffle-assertions": "0.9.2",
+    "surya": "0.2.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mixbytes/trust-deal.git"
+  },
+  "keywords": [],
+  "author": "SabaunT",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/mixbytes/trust-deal/issuess"
+  },
+  "homepage": "https://github.com/mixbytes/trust-deal#readme"
+}
