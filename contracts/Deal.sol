@@ -9,13 +9,14 @@ contract DealDataRows {
 
     uint256 reviewerFee;
 
-    uint64 dealDeadline;
-    uint64 reviewerDesicionDeadline; // TODO maybe use patter from RenderHash: _stateTransitionDeadline
+    uint64 iterationDuration;
+    uint64 reviewerDecisionDuration; // TODO опасно ставить параметр конечная временная точка, тк надо будет проверять на каждом состоянии.
+    uint64 reviewerDecisionTimeIntervalStart;
 }
 
 contract DealStateTransitioner is DealDataRows {
     enum States {INIT, PROPOSED_REVIEWER, RFP, DEPOSIT_WAIT, ITERATION}
-    States public currentState; // TODO maybe handled by event logs?
+    States public currentState;
 }
 
 contract Deal is DealStateTransitioner {
@@ -23,6 +24,6 @@ contract Deal is DealStateTransitioner {
         client = msg.sender;
 
         taskDescription = taskDescr_;
-        dealDeadline = iterationTimeout_;
+        iterationDuration = iterationTimeout_;
     }
 }
