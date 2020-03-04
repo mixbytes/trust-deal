@@ -82,7 +82,7 @@ module.exports = {
     // timeout: 100000
   },
 
-  // Configure your compilers
+  // Configure your compilers. Compiler: v0.5.7+commit.6da8b019
   compilers: {
     solc: {
       version: "0.5.7",    // Fetch exact version from solc-bin (default: truffle's version)
