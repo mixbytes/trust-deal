@@ -1,7 +1,7 @@
 const Deal = artifacts.require("Deal");
+const DealToken = artifacts.require("DealToken");
 
 contract('Deal. Base Test', async accounts => {
-    
     const States = {
         INIT: 0,
         PROPOSED_REVIWER: 1
@@ -13,6 +13,7 @@ contract('Deal. Base Test', async accounts => {
     const reviewer2 = accounts[3];
 
     let dealContract;
+    let dealTokenContract;
 
     let expectThrow = async (promise) => {
         try {
@@ -37,16 +38,22 @@ contract('Deal. Base Test', async accounts => {
         return block.timestamp
     }
 
-    it('deploy', async() => {
+    before('deploying deal and token', async() => {
+        // Preparing and deploying token contract
+        dealTokenContract = await DealToken.new({from: client});
+
+        // Preparing and deploying Deal contract
         let currentTime = await getCurrentTimestamp();
 
         let dealDeadline = currentTime + 10000000000;
         let taskMock = "some string";
-        dealContract = await Deal.new(taskMock, dealDeadline, {from: client});
-        
-        contractState = await dealContract.currentState.call();
-
-        assert.equal(contractState, States.INIT)
+        dealContract = await Deal.new(taskMock, dealDeadline, dealTokenContract.address, {from: client});
     });
+
+    it("check deployed deal state is INIT", async() => {
+        dealState = await dealContract.currentState.call()
+
+        assert.equal(dealState, States.INIT)
+    }) 
 
 })

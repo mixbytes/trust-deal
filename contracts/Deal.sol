@@ -1,11 +1,15 @@
 pragma solidity 0.5.7;
 
+import '../node_modules/openzeppelin-solidity/contracts/token/ERC20/IERC20.sol'; // tmp
+
 contract DealDataRows {
     string taskDescription;
 
     address client;
-    address developer;
+    address contractor;
     address reviewer;
+
+    IERC20 public dealToken;
 
     uint256 reviewerFee;
 
@@ -20,10 +24,11 @@ contract DealStateTransitioner is DealDataRows {
 }
 
 contract Deal is DealStateTransitioner {
-    constructor(string memory taskDescr_, uint64 iterationTimeout_) public {
+    constructor(string memory taskDescr_, uint64 iterationTimeout_, IERC20 dealToken_) public {
         client = msg.sender;
 
         taskDescription = taskDescr_;
         iterationDuration = iterationTimeout_;
+        dealToken = dealToken_;
     }
 }
