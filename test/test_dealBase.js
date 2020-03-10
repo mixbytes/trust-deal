@@ -8,7 +8,7 @@ contract('Deal. Base Test', async accounts => {
     }
 
     const client = accounts[0];
-    const developer = accounts[1];
+    const contractor = accounts[1];
     const reviewer1 = accounts[2];
     const reviewer2 = accounts[3];
 
@@ -17,15 +17,15 @@ contract('Deal. Base Test', async accounts => {
 
     let expectThrow = async (promise) => {
         try {
-          await promise;
+            await promise;
         } catch (error) {
-          const invalidOpcode = error.message.search('invalid opcode') >= 0;
-          const outOfGas = error.message.search('out of gas') >= 0;
-          const revert = error.message.search('revert') >= 0;
-          assert(
-            invalidOpcode || outOfGas || revert,
-            "Expected throw, got '" + error + "' instead",
-          );
+            const invalidOpcode = error.message.search('invalid opcode') >= 0;
+            const outOfGas = error.message.search('out of gas') >= 0;
+            const revert = error.message.search('revert') >= 0;
+            assert(
+                invalidOpcode || outOfGas || revert,
+                "Expected throw, got '" + error + "' instead",
+            );
           return;
         }
         assert.fail('Expected throw not received');
@@ -54,6 +54,38 @@ contract('Deal. Base Test', async accounts => {
         dealState = await dealContract.currentState.call()
 
         assert.equal(dealState, States.INIT)
-    }) 
+    })
 
+    it("should fail transition to PROPOSED_REVIWER", async() => {
+        //wrong access
+        await expectThrow(
+            dealContract.proposeReviewer(contractor, 5, 1000, {from: contractor})
+        )
+        // wrong fee
+        await expectThrow(
+            dealContract.proposeReviewer(contractor, 12, 1000, {from: client})
+        )
+        // wrong decision duration
+        await expectThrow(
+            dealContract.proposeReviewer(contractor, 5, 0, {from: client})
+        )
+    })
+
+    it("should change state to PROPOSED_REVIEWER", async() => {
+        contractorFee = 5 // 0.05%
+        reviwerDecisionDuration = 60 * 60 * 24 * 3 // 3 days
+        await dealContract.proposeReviewer(contractor, contractorFee, reviwerDecisionDuration, {from: client});
+
+        contractState = await dealContract.currentState.call();
+        assert.equal(contractState, States.PROPOSED_REVIWER)
+    })
+
+    it("should reset reviewer params", async() => {
+        contractorFee = 5 // 0.05%
+        reviwerDecisionDuration = 60 * 60 * 24 * 5 // 5 days
+        await dealContract.proposeReviewer(contractor, contractorFee, reviwerDecisionDuration, {from: client});
+
+        contractState = await dealContract.currentState.call();
+        assert.equal(contractState, States.PROPOSED_REVIWER)        
+    })
 })
