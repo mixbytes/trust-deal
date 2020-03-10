@@ -14,7 +14,7 @@ contract DealDataRows {
     uint8 reviewerFee; // TODO could change
 
     uint64 iterationDuration;
-    uint64 reviewerDecisionDuration; // TODO опасно ставить параметр конечная временная точка, тк надо будет проверять на каждом состоянии.
+    uint64 reviewerDecisionDuration; // TODO опасно ставить параметр как конечная временная точка, тк надо будет проверять на каждом состоянии.
     uint64 reviewerDecisionTimeIntervalStart;
 }
 
