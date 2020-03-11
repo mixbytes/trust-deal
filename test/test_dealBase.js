@@ -81,7 +81,10 @@ contract('Deal. Base Test', async accounts => {
         )
         // wrong fee
         await expectThrow(
-            dealContract.proposeReviewer(reviewer1, 12, 1000, {from: client})
+            dealContract.proposeReviewer(reviewer1, 0, 1000, {from: client})
+        )
+        await expectThrow(
+            dealContract.proposeReviewer(reviewer1, 0, 200000, {from: client})
         )
         // wrong decision duration
         await expectThrow(
