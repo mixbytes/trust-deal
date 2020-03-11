@@ -74,10 +74,10 @@ interface ITMIterativeDeal {
      * @dev A contractor submits an application for the task.
      *
      * @param application application description
-     * @param employees addresses of actors which log the work hours
+     * @param workers addresses of actors which log the work hours
      * @param rates hourly rates corresponding to the addresses, in payment_token units
      */
-    function newApplication(string calldata application, address[] calldata employees, uint[] calldata rates) external;
+    function newApplication(string calldata application, address[] calldata workers, uint256[] calldata rates) external;
 
     /// @dev Total number of applications.
     function getApplicationsNumber() external view returns (uint);
