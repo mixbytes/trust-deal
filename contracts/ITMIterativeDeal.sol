@@ -15,14 +15,19 @@ interface ITMIterativeDeal {
     /// @dev Current state of the deal.
     function getState() external view returns (States);
 
+    /// @dev Client of the deal.
+    function getClient() external view returns (address);
+
     /**
      * @dev The client initializes the deal.
      *
+     * @param shortName short name
      * @param task task description
      * @param iterationTimeSeconds maximum duration of an iteration (wall clock seconds)
      * @param paymentToken token used for payments
      */
-    function init(string calldata task, uint32 iterationTimeSeconds, IERC20 paymentToken) external;
+    function init(string calldata shortName, string calldata task, uint32 iterationTimeSeconds, IERC20 paymentToken)
+        external;
 
 
     // INIT state functions
@@ -46,16 +51,44 @@ interface ITMIterativeDeal {
      */
     function reviewerJoins(bool willJoinTheDeal) external;
 
+
     // RFP state functions
+
+    /// @dev Reviewer of the deal.
+    function getReviewer() external view returns (address);
+
+    /// @dev Basic info about the deal.
+    function getInfo() external view returns (
+        States state,
+        address client,
+        string memory shortName,
+        string memory task,
+        uint32 iterationTimeSeconds,
+        IERC20 paymentToken,
+        address dealReviewer,
+        uint16 feeBPS,
+        uint32 reviewTimeoutSeconds
+    );
 
     /**
      * @dev A contractor submits an application for the task.
      *
      * @param application application description
-     * @param addresses addresses of actors which log the work hours
+     * @param employees addresses of actors which log the work hours
      * @param rates hourly rates corresponding to the addresses, in payment_token units
      */
-    function newApplication(string calldata application, address[] calldata addresses, uint[] calldata rates) external;
+    function newApplication(string calldata application, address[] calldata employees, uint[] calldata rates) external;
+
+    /// @dev Total number of applications.
+    function getApplicationsNumber() external view returns (uint);
+
+    /// @dev `i`-ths application.
+    function getApplication(uint i) external view returns (
+        address contractor,
+        string memory application,
+        address[] memory employees,
+        uint[] memory rates
+    );
 
     /// @dev The client cancels the deal.
     function cancelRFP() external;
@@ -78,10 +111,33 @@ interface ITMIterativeDeal {
     /**
      * @dev One of contractor addresses logs the work.
      *
-     * @param work_minutes minutes delivered
+     * @param workMinutes minutes delivered
      * @param info description of the work done
      */
-    function logWork(uint32 work_minutes, string calldata info) external;
+    function logWork(uint32 workMinutes, string calldata info) external;
+
+    /// @dev Stat of the current iteration.
+    function getIterationStat() external view returns (
+        uint currentNumber,
+        uint minutesLogged,
+        uint remainingBudget,
+        uint spentBudget
+    );
+
+    /// @dev Lifetime stat of the deal.
+    function getTotalStat() external view returns (
+        uint minutesLogged,
+        uint spentBudget
+    );
+
+    /// @dev All the data logged using logWork.
+    function getLoggedData() external view returns (
+        uint32[] memory iterationNumber,
+        uint32[] memory logTimestamp,
+        uint32[] memory workMinutes,
+        uint32[] memory infoEntryLength,
+        string memory concatenatedInfos
+    );
 
     /// @dev Signals to finish the current iteration and start a review.
     function finishIteration() external;
