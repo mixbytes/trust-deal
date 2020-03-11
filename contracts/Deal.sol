@@ -11,23 +11,36 @@ contract DealDataRows {
 
     IERC20 public dealToken;
 
-    uint8 reviewerFee; // TODO could change
+    uint16 reviewerFeeBPS;
 
-    uint64 iterationDuration;
-    uint64 reviewerDecisionDuration; // TODO опасно ставить параметр как конечная временная точка, тк надо будет проверять на каждом состоянии.
-    uint64 reviewerDecisionTimeIntervalStart;
+    uint32 iterationDuration;
+
+    // TODO duration was choosed, because using final timestamp (deadline) causes multiple checks in every state that now() > deadline
+    uint32 reviewerDecisionDuration;
+    uint32 reviewerDecisionTimeIntervalStart;
 }
 
-contract DealStateTransitioner is DealDataRows {
-    // TODO changeStateTo функцию как в рендер-хэш
+contract BaseDealStateTransitioner is DealDataRows {
     modifier onlyClient {
-        require(msg.sender == client, "Reviwer can be proposed only by client");
+        require(msg.sender == client, "Only clients action");
         _;
     }
+
+    modifier onlyReviewer {
+        require(msg.sender == reviewer, "Only chosen reviewer action");
+        _;
+    }
+
     enum States {INIT, PROPOSED_REVIEWER, RFP, DEPOSIT_WAIT, ITERATION}
     States public currentState;
+}
 
-    function proposeReviewer(address contractor_, uint8 fee_, uint64 decisionDuration)
+contract DealProposedReviewerStateLogic is BaseDealStateTransitioner {
+    event ReviewerProposed(address reviewer, uint16 reviewerFeeBPS, uint32 decisionDuration);
+    event ReviewerAcceptedConditions(address reviewer);
+    event ReviewerDeclinedConditions(address reviewer);
+
+    function proposeReviewer(address reviewer_, uint16 feeBPS_, uint32 decisionDuration)
         external
         onlyClient
     {
@@ -35,20 +48,42 @@ contract DealStateTransitioner is DealDataRows {
             currentState == States.INIT || currentState == States.PROPOSED_REVIEWER,
             "Call from wrong state"
         );
-        require(contractor_ != address(0), "Address can't be zero");
-        require(fee_ >= 1 && fee_ <= 9, "Fee can be only from 1 to 9");
+        require(reviewer_ != address(0), "Address can't be zero");
+        require(feeBPS_ >= 1 && feeBPS_ <= 9, "Fee can be only from 1 to 9");
         require(decisionDuration > 0, "Reviewer decision duration should be gt 0");
 
-        contractor = contractor_;
-        reviewerFee = fee_;
+        reviewer = reviewer_;
+        reviewerFeeBPS = feeBPS_;
         reviewerDecisionDuration = decisionDuration;
 
         currentState = States.PROPOSED_REVIEWER;
+        emit ReviewerProposed(reviewer, reviewerFeeBPS, reviewerDecisionDuration);
+    }
+
+    function acceptReviewConditions() external onlyReviewer {
+        require(currentState == States.PROPOSED_REVIEWER, "Call from wrong state");
+
+        currentState = States.RFP;
+        emit ReviewerAcceptedConditions(reviewer);
+    }
+
+    function declineReviewConditions() external onlyReviewer {
+        require(currentState == States.PROPOSED_REVIEWER, "Call from wrong state");
+
+        reviewer = address(0);
+        reviewerFeeBPS = 0;
+        reviewerDecisionDuration = 0;
+
+        currentState = States.INIT;
+        emit ReviewerDeclinedConditions(reviewer);
     }
 }
 
-contract Deal is DealStateTransitioner {
-    constructor(string memory taskDescr_, uint64 iterationTimeout_, IERC20 dealToken_) public {
+contract MainDealStateTransitioner is DealProposedReviewerStateLogic {}
+
+contract Deal is MainDealStateTransitioner {
+    // TODO ETH_TOKEN = address(0)
+    constructor(string memory taskDescr_, uint32 iterationTimeout_, IERC20 dealToken_) public {
         client = msg.sender;
 
         taskDescription = taskDescr_;
