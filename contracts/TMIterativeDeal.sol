@@ -5,6 +5,7 @@ import './interfaces/ITMIterativeDeal.sol';
 import './interfaces/IDealVersioning.sol';
 
 contract DealDataRows {
+    string taskShortName;
     string taskDescription;
 
     address client;
@@ -40,13 +41,20 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         return currentState;
     }
 
-    function init(string calldata task, uint32 iterationTimeSeconds, IERC20 paymentToken)
+    function init(
+        string calldata shortName,
+        string calldata task,
+        uint32 iterationTimeSeconds,
+        IERC20 paymentToken
+    )
         external
         onlyClient
     {
+        // TODO check strings for emptiness
         require(currentState == States.CONSTRUCTED, "Call from wrong state");
         require(iterationTimeSeconds > 60 * 60, "Iteration duration should be gt 1 hour");
 
+        taskShortName = shortName;
         taskDescription = task;
         iterationDuration = iterationTimeSeconds;
         dealToken = paymentToken;
@@ -83,6 +91,10 @@ contract DealProposedReviewerStateLogic is BaseDealStateTransitioner {
     event ReviewerAcceptedConditions(address reviewer);
     event ReviewerDeclinedConditions(address reviewer);
 
+    function getReviewer() external view returns (address) {
+        return reviewer;
+    }
+
     function reviewerJoins(bool willJoinTheDeal) external {
         if (willJoinTheDeal) {
             _acceptReviewConditions();
@@ -112,12 +124,21 @@ contract DealProposedReviewerStateLogic is BaseDealStateTransitioner {
 
 contract MainDealStateTransitioner is DealProposedReviewerStateLogic, DealInitStateLogic {
     // Mocks
-    function newApplication(
-        string calldata application, address[] calldata addresses, uint[] calldata rates
-    )
-        external
-    {
+    function newApplication(string calldata application, address[] calldata employees, uint[] calldata rates) external {
         1+1;
+    }
+
+    function getApplicationsNumber() external view returns (uint) {
+        return 0;
+    }
+
+    function getApplication(uint i) external view returns (
+        address contractor,
+        string memory application,
+        address[] memory employees,
+        uint[] memory rates
+    ) {
+        return (client,"",new address[](1),new uint[](1));
     }
 
     function cancelRFP() external {
@@ -136,8 +157,40 @@ contract MainDealStateTransitioner is DealProposedReviewerStateLogic, DealInitSt
         1+1;
     }
 
-    function logWork(uint32 work_minutes, string calldata info) external {
+    function logWork(uint32 workMinutes, string calldata info) external {
         1+1;
+    }
+
+    function getIterationStat() external view returns (
+        uint currentNumber,
+        uint minutesLogged,
+        uint remainingBudget,
+        uint spentBudget
+    ) {
+        return (0,0,0,0);
+    }
+
+    function getTotalStat() external view returns (
+        uint minutesLogged,
+        uint spentBudget
+    ) {
+        return (0,0);
+    }
+
+    function getLoggedData() external view returns (
+        uint32[] memory iterationNumber,
+        uint32[] memory logTimestamp,
+        uint32[] memory workMinutes,
+        uint32[] memory infoEntryLength,
+        string memory concatenatedInfos
+    ) {
+        return (
+            new uint32[](1),
+            new uint32[](1),
+            new uint32[](1),
+            new uint32[](1),
+            ""
+        );
     }
 
     function finishIteration() external {
@@ -159,6 +212,10 @@ contract TMIterativeDeal is MainDealStateTransitioner, IDealVersioning {
         client = msg.sender;
     }
 
+    function getClient() external view returns (address) {
+        return client;
+    }
+
     function getDealType() external pure returns (string memory) {
         return "TMIterativeDeal";
     }
@@ -168,4 +225,27 @@ contract TMIterativeDeal is MainDealStateTransitioner, IDealVersioning {
         return (v.major, v.minor, v.patch);
     }
 
+    function getInfo() external view returns (
+        States state,
+        address client,
+        string memory shortName,
+        string memory task,
+        uint32 iterationTimeSeconds,
+        IERC20 paymentToken,
+        address dealReviewer,
+        uint16 feeBPS,
+        uint32 reviewTimeoutSeconds
+    ) {
+        return (
+            currentState,
+            client,
+            taskShortName,
+            taskDescription,
+            iterationDuration,
+            dealToken,
+            reviewer,
+            reviewerFeeBPS,
+            reviewerDecisionDuration
+        );
+    }
 }

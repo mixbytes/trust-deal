@@ -51,23 +51,25 @@ contract('Deal. Base Test', async accounts => {
     it("should fail INIT", async() => {
         let iterationTimeout = 60 * 60 * 24 * 14;
         let taskMock = "some string";
+        let shortName = "lal";
 
         // wrong access
         await expectThrow(
-            dealContract.init(taskMock, iterationTimeout, dealTokenContract.address, {from: contractor})
+            dealContract.init(shortName, taskMock, iterationTimeout, dealTokenContract.address, {from: contractor})
         )
 
         // wrong param for iteration duration
         await expectThrow(
-            dealContract.init(taskMock, 0, dealTokenContract.address, {from: client})
+            dealContract.init(shortName, taskMock, 0, dealTokenContract.address, {from: client})
         )
     })
 
     it("should move state to INIT", async() => {
         let iterationTimeout = 60 * 60 * 24 * 14;
         let taskMock = "some string";
+        let shortName = "lal";
 
-        dealContract.init(taskMock, iterationTimeout, dealTokenContract.address, {from: client})
+        dealContract.init(shortName, taskMock, iterationTimeout, dealTokenContract.address, {from: client})
 
         currentState = await dealContract.getState({from: client});
         assert.equal(currentState, States.INIT)
