@@ -13,16 +13,16 @@ interface ITMIterativeDeal {
 
 
     /// @dev Current state of the deal.
-    function getState() external returns (States);
+    function getState() external view returns (States);
 
     /**
      * @dev The client initializes the deal.
      *
      * @param task task description
-     * @param iteration_time_seconds maximum duration of an iteration (wall clock seconds)
-     * @param payment_token token used for payments
+     * @param iterationTimeSeconds maximum duration of an iteration (wall clock seconds)
+     * @param paymentToken token used for payments
      */
-    function init(string calldata task, uint32 iteration_time_seconds, IERC20 payment_token) external;
+    function init(string calldata task, uint32 iterationTimeSeconds, IERC20 paymentToken) external;
 
 
     // INIT state functions
@@ -30,11 +30,11 @@ interface ITMIterativeDeal {
     /**
      * @dev The client proposes participation to a reviewer.
      *
-     * @param reviewer proposed reviewer
-     * @param reviewer_fee_bps reviewer fee in basis points
-     * @param review_timeout_seconds timeout for the review phase
+     * @param dealReviewer proposed reviewer
+     * @param feeBPS reviewer fee in basis points
+     * @param reviewTimeoutSeconds timeout for the review phase
      */
-    function proposeReviewer(address reviewer, uint16 reviewer_fee_bps, uint32 review_timeout_seconds) external;
+    function proposeReviewer(address dealReviewer, uint16 feeBPS, uint32 reviewTimeoutSeconds) external;
 
 
     // PROPOSED_REVIEWER state functions
@@ -45,7 +45,6 @@ interface ITMIterativeDeal {
      * @param willJoinTheDeal if true, the reviewer joins the deal and will act as a reviewing party from now on
      */
     function reviewerJoins(bool willJoinTheDeal) external;
-
 
     // RFP state functions
 

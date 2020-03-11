@@ -1,12 +1,12 @@
-const Deal = artifacts.require("Deal");
+const Deal = artifacts.require("TMIterativeDeal");
 const DealToken = artifacts.require("DealToken");
 
 contract('Deal. Base Test', async accounts => {
     const States = {
-        INIT: 0,
-        PROPOSED_REVIWER: 1,
-        RFP: 2,
-        DEPOSIT_WAIT: 3,
+        INIT: 1,
+        PROPOSED_REVIWER: 2,
+        RFP: 3,
+        DEPOSIT_WAIT: 4,
     }
     const zeroAddress = 0;
 
@@ -44,19 +44,34 @@ contract('Deal. Base Test', async accounts => {
     before('deploying deal and token', async() => {
         // Preparing and deploying token contract
         dealTokenContract = await DealToken.new({from: client});
-
-        // Preparing and deploying Deal contract
-        let currentTime = await getCurrentTimestamp();
-
-        let dealDeadline = currentTime + 10000000000;
-        let taskMock = "some string";
-        dealContract = await Deal.new(taskMock, dealDeadline, dealTokenContract.address, {from: client});
+        
+        dealContract = await Deal.new({from: client});
     });
 
-    it("check deployed deal state is INIT", async() => {
-        dealState = await dealContract.currentState.call()
+    it("should fail INIT", async() => {
+        let iterationTimeout = 60 * 60 * 24 * 14;
+        let taskMock = "some string";
 
-        assert.equal(dealState, States.INIT)
+        // wrong access
+        await expectThrow(
+            dealContract.init(taskMock, iterationTimeout, dealTokenContract.address, {from: contractor})
+        )
+
+        // wrong param for iteration duration
+        await expectThrow(
+            dealContract.init(taskMock, 0, dealTokenContract.address, {from: client})
+        )
+    })
+
+    it("should move state to INIT", async() => {
+        let iterationTimeout = 60 * 60 * 24 * 14;
+        let taskMock = "some string";
+
+        dealContract.init(taskMock, iterationTimeout, dealTokenContract.address, {from: client})
+
+        currentState = await dealContract.getState({from: client});
+        assert.equal(currentState, States.INIT)
+
     })
 
     it("should fail transition to PROPOSED_REVIWER", async() => {
@@ -79,7 +94,7 @@ contract('Deal. Base Test', async accounts => {
         reviwerDecisionDuration = 60 * 60 * 24 * 3 // 3 days
         await dealContract.proposeReviewer(reviewer1, reviewerFee, reviwerDecisionDuration, {from: client});
 
-        contractState = await dealContract.currentState.call();
+        contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)
     })
 
@@ -88,25 +103,25 @@ contract('Deal. Base Test', async accounts => {
         reviwerDecisionDuration = 60 * 60 * 24 * 5 // 5 days
         await dealContract.proposeReviewer(reviewer1, reviewerFee, reviwerDecisionDuration, {from: client});
 
-        contractState = await dealContract.currentState.call();
+        contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)        
     })
 
     it("should fail decline reviewer coniditions", async() => {
         // wrong access
         await expectThrow(
-            dealContract.declineReviewConditions({from: contractor})
+            dealContract.reviewerJoins(false, {from: contractor})
         )
     })
 
     it("should decline reviewer conditions", async() => {
-        tx = await dealContract.declineReviewConditions({from: reviewer1})
+        tx = await dealContract.reviewerJoins(false, {from: reviewer1})
 
-        contractState = await dealContract.currentState.call();
+        contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.INIT)
 
-        statedReviewer = tx.logs[0].args.reviewer;
-        assert.equal(statedReviewer, zeroAddress)
+        declinedReviewer = tx.logs[0].args.reviewer;
+        assert.equal(declinedReviewer, zeroAddress)
     })
 
     it("should change state to PROPOSED_REVIEWER proposing reviewer2", async() => {
@@ -114,14 +129,14 @@ contract('Deal. Base Test', async accounts => {
         reviwerDecisionDuration = 60 * 60 * 24 * 3 // 5 days
         await dealContract.proposeReviewer(reviewer2, reviewerFee, reviwerDecisionDuration, {from: client});
 
-        contractState = await dealContract.currentState.call();
+        contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)
     })
 
     it("should accept reviewer conditions by reviewer2 and move state to RFP", async() => {
-        tx = await dealContract.acceptReviewConditions({from: reviewer2})
+        tx = await dealContract.reviewerJoins(true, {from: reviewer2})
 
-        contractState = await dealContract.currentState.call();
+        contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.RFP)
 
         statedReviewer = tx.logs[0].args.reviewer;
@@ -131,7 +146,7 @@ contract('Deal. Base Test', async accounts => {
     it("should fail review decline by reviewer2", async() => {
         // wrong state
         await expectThrow(
-            dealContract.declineReviewConditions({from: reviewer2})
+            dealContract.reviewerJoins(false, {from: reviewer2})
         )
     })
 })
