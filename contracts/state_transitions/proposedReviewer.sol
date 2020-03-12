@@ -6,11 +6,8 @@ contract DealProposedReviewerStateLogic is BaseDealStateTransitioner {
     event ReviewerAcceptedConditions(address reviewer);
     event ReviewerDeclinedConditions(address reviewer);
 
-    function getReviewer() external view returns (address) {
-        return reviewer;
-    }
-
     function reviewerJoins(bool willJoinTheDeal) external {
+        require(currentState == States.PROPOSED_REVIEWER, "Call from wrong state");
         if (willJoinTheDeal) {
             _acceptReviewConditions();
         } else {
@@ -19,20 +16,16 @@ contract DealProposedReviewerStateLogic is BaseDealStateTransitioner {
     }
 
     function _acceptReviewConditions() internal onlyReviewer {
-        require(currentState == States.PROPOSED_REVIEWER, "Call from wrong state");
-
         currentState = States.RFP;
-        emit ReviewerAcceptedConditions(reviewer);
+        emit ReviewerAcceptedConditions(msg.sender);
     }
 
     function _declineReviewConditions() internal onlyReviewer {
-        require(currentState == States.PROPOSED_REVIEWER, "Call from wrong state");
-
         reviewer = address(0);
         reviewerFeeBPS = 0;
         reviewerDecisionDuration = 0;
 
         currentState = States.INIT;
-        emit ReviewerDeclinedConditions(reviewer);
+        emit ReviewerDeclinedConditions(msg.sender);
     }
 }

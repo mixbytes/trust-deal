@@ -9,27 +9,6 @@ contract MainDealStateTransitioner is DealRFPStateLogic,
     DealInitStateLogic
 {
     // Mocks
-    function getApplicationsNumber() external view returns (uint) {
-        return 0;
-    }
-
-    function getApplication(uint i) external view returns (
-        address contractor,
-        string memory application,
-        address[] memory employees,
-        uint[] memory rates
-    ) {
-        return (client,"",new address[](1),new uint[](1));
-    }
-
-    function cancelRFP() external {
-        1+1;
-    }
-
-    function approveApplication(address contractor) external {
-        1+1;
-    }
-
     function finishDeal() external {
         1+1;
     }

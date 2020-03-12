@@ -26,11 +26,19 @@ contract DealDataRows {
         string description;
         mapping (address=>uint256) employees;
     }
-
     mapping (address => Application) applications;
 }
 
 contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
+
+    event DealInitialized(
+        address who,
+        string shortName,
+        string task,
+        uint32 iterationDuration,
+        IERC20 paymentToken
+    );
+
     modifier onlyClient {
         require(msg.sender == client, "Only clients action");
         _;
@@ -45,6 +53,10 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
 
     function getState() external view returns (States) {
         return currentState;
+    }
+
+    function getClient() external view returns (address) {
+        return client;
     }
 
     function init(
@@ -66,5 +78,6 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         dealToken = paymentToken;
 
         currentState = States.INIT;
+        emit DealInitialized(msg.sender, shortName, task, iterationTimeSeconds, paymentToken);
     }
 }

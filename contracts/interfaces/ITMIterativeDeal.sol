@@ -80,20 +80,13 @@ interface ITMIterativeDeal {
     function newApplication(string calldata application, address[] calldata workers, uint256[] calldata rates) external;
 
     /// @dev Emitted when a new application is added by `contractor` (not indexed on purpose).
-    event ApplicationAdded(address contractor);
-
-    /// @dev Get application made by `contractor`.
-    function getApplication(address contractor) external view returns (
-        string memory application,
-        address[] memory employees,
-        uint[] memory rates
-    );
+    event ApplicationAdded(address contractor, string application, address[] workers, uint256[] rates);
 
     /// @dev The client cancels the deal.
     function cancelRFP() external;
 
-    /// @dev The client approves the application made by `contractor`.
-    function approveApplication(address contractor) external;
+    /// @dev The client approves the application made by `contractorForDeal`.
+    function approveApplication(address contractorForDeal) external;
 
 
     // WAIT4DEPOSIT state functions

@@ -14,6 +14,9 @@ contract('Deal. Base Test', async accounts => {
     const contractor = accounts[1];
     const reviewer1 = accounts[2];
     const reviewer2 = accounts[3];
+    const worker1 = accounts[4];
+    const worker2 = accounts[5];
+    const contractor2 = accounts[6];
 
     let dealContract;
     let dealTokenContract;
@@ -62,6 +65,8 @@ contract('Deal. Base Test', async accounts => {
         await expectThrow(
             dealContract.init(shortName, taskMock, 0, dealTokenContract.address, {from: client})
         )
+
+        // TODO string length
     })
 
     it("should move state to INIT", async() => {
@@ -69,14 +74,19 @@ contract('Deal. Base Test', async accounts => {
         let taskMock = "some string";
         let shortName = "lal";
 
-        dealContract.init(shortName, taskMock, iterationTimeout, dealTokenContract.address, {from: client})
+        await dealContract.init(shortName, taskMock, iterationTimeout, dealTokenContract.address, {from: client})
 
         currentState = await dealContract.getState({from: client});
         assert.equal(currentState, States.INIT)
-
     })
 
-    it("should fail transition to PROPOSED_REVIWER", async() => {
+    it('should fail init second time', async() => {
+        await expectThrow(
+            dealContract.init("12", "212", 12121212, dealTokenContract.address, {from: client})
+        )
+    })
+
+    it("should fail transition to PROPOSED_REVIEWER", async() => {
         //wrong access
         await expectThrow(
             dealContract.proposeReviewer(reviewer1, 5, 1000, {from: contractor})
@@ -124,9 +134,6 @@ contract('Deal. Base Test', async accounts => {
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.INIT)
-
-        declinedReviewer = tx.logs[0].args.reviewer;
-        assert.equal(declinedReviewer, zeroAddress)
     })
 
     it("should change state to PROPOSED_REVIEWER proposing reviewer2", async() => {
@@ -136,6 +143,13 @@ contract('Deal. Base Test', async accounts => {
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)
+    })
+
+    it("should fail acception of reviewer conditions", async() => {
+        //wrong access
+        await expectThrow(
+            dealContract.reviewerJoins(true, {from: reviewer1})
+        )
     })
 
     it("should accept reviewer conditions by reviewer2 and move state to RFP", async() => {
@@ -154,4 +168,66 @@ contract('Deal. Base Test', async accounts => {
             dealContract.reviewerJoins(false, {from: reviewer2})
         )
     })
+
+    it('should fail new application', async() => {
+        // wrong access
+        await expectThrow(
+            dealContract.newApplication("123", [worker1, worker2], [1, 1], {from: reviewer2})
+        )
+
+        
+        // invalid length of params
+        await expectThrow(
+            dealContract.newApplication("123", [worker1], [1,1], {from: contractor})
+        )
+
+        // invalid length of params
+        await expectThrow(
+            dealContract.newApplication("123", [], [], {from: contractor})
+        )
+
+        await expectThrow(
+            dealContract.newApplication("", [worker1], [300], {from: contractor})
+        )
+
+        // invalid value of param
+        await expectThrow(
+            dealContract.newApplication("", [worker1, "0x0000000000000000000000000000000000000000"], [1,2], {from: contractor})
+        )
+        
+        await expectThrow(
+            dealContract.newApplication("", [worker1, worker2], [0, 3], {from: contractor})
+        )
+        
+    })
+    
+    it('should add new applications', async() => {
+        await dealContract.newApplication("mock", [worker1, worker2], [1000, 1000], {from: contractor})
+        await dealContract.newApplication("mock2", [worker1], [800], {from: contractor2})
+    })
+
+    it("shpuld fail cancel", async() => {
+        // wrong access
+        await expectThrow(
+            dealContract.cancelRFP({from: contractor})
+        )
+    })
+
+    it("should fail application approve", async() => {
+        // wrong access
+        await expectThrow(
+            dealContract.approveApplication(contractor, {from: contractor})
+        )
+
+        // wrong contractor address value
+        await expectThrow(
+            dealContract.approveApplication("0x0000000000000000000000000000000000000000", {from: client})
+        )
+
+        // contractor hasn't got applications
+        await expectThrow(
+            dealContract.approveApplication(reviewer1, {from: client})
+        )
+    })
+    
 })

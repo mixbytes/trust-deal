@@ -14,7 +14,7 @@ contract DealInitStateLogic is BaseDealStateTransitioner {
             "Call from wrong state"
         );
         require(dealReviewer != address(0), "Address can't be zero");
-        require(feeBPS > 0 && feeBPS < 10000, "Fee can be only from 1 to 9");
+        require(feeBPS > 0 && feeBPS < 10000, "Fee BPS could be only in range (0, 10000)");
         require(reviewTimeoutSeconds > 60, "Reviewer decision duration should be gt 0"); // todo 1 minute?
 
         reviewer = dealReviewer;
