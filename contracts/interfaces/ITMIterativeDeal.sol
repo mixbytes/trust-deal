@@ -79,12 +79,11 @@ interface ITMIterativeDeal {
      */
     function newApplication(string calldata application, address[] calldata workers, uint256[] calldata rates) external;
 
-    /// @dev Total number of applications.
-    function getApplicationsNumber() external view returns (uint);
+    /// @dev Emitted when a new application is added by `contractor` (not indexed on purpose).
+    event ApplicationAdded(address contractor);
 
-    /// @dev `i`-ths application.
-    function getApplication(uint i) external view returns (
-        address contractor,
+    /// @dev Get application made by `contractor`.
+    function getApplication(address contractor) external view returns (
         string memory application,
         address[] memory employees,
         uint[] memory rates
