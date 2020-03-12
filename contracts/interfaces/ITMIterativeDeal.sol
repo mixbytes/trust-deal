@@ -103,10 +103,11 @@ interface ITMIterativeDeal {
     /**
      * @dev One of contractor addresses logs the work.
      *
+     * @param logTimestamp when the work was performed
      * @param workMinutes minutes delivered
      * @param info description of the work done
      */
-    function logWork(uint32 workMinutes, string calldata info) external;
+    function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external;
 
     /// @dev Stat of the current iteration.
     function getIterationStat() external view returns (
