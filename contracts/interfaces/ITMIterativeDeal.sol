@@ -60,7 +60,7 @@ interface ITMIterativeDeal {
     /// @dev Basic info about the deal.
     function getInfo() external view returns (
         States state,
-        address client,
+        address dealClient,
         string memory shortName,
         string memory task,
         uint32 iterationTimeSeconds,
