@@ -3,21 +3,16 @@ pragma solidity 0.5.7;
 import './init.sol';
 import './proposedReviewer.sol';
 import './rfp.sol';
+import './wait4deposit.sol';
 
-contract MainDealStateTransitioner is DealRFPStateLogic,
+contract MainDealStateTransitioner is DealWait4DepositStateLogic,
+    DealRFPStateLogic,
     DealProposedReviewerStateLogic,
     DealInitStateLogic
 {
     // Mocks
-    function finishDeal() external {
-        1+1;
-    }
 
-    function newIteration() external payable {
-        1+1;
-    }
-
-    function logWork(uint32 workMinutes, string calldata info) external {
+    function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external {
         1+1;
     }
 

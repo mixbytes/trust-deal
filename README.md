@@ -9,6 +9,8 @@
 6. application acceptance model can be changed: we can implement it more off-chain by emiting contractors proposals and gathering them on front. So we will have mapping(contractor=>Application) on front. When client accepts contractor, he saves only contractors address. All other params we get form front.
 7. reviewer can be got from ReviewerAcceptedConditions
 8. cancelRFP seems to be unfinished
+9. what if dealToken is address payable or client/contractor are contracts
+10. think about functions that definitely must emit events
 
 Run tests with:
 ```

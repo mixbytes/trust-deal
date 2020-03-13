@@ -206,7 +206,7 @@ contract('Deal. Base Test', async accounts => {
         await dealContract.newApplication("mock2", [worker1], [800], {from: contractor2})
     })
 
-    it("shpuld fail cancel", async() => {
+    it("should fail cancel deal", async() => {
         // wrong access
         await expectThrow(
             dealContract.cancelRFP({from: contractor})
@@ -228,6 +228,11 @@ contract('Deal. Base Test', async accounts => {
         await expectThrow(
             dealContract.approveApplication(reviewer1, {from: client})
         )
+    })
+
+    it("should approve application", async() => {
+        let tx = await dealContract.approveApplication(contractor, {from: client})
+        assert.equal(tx.logs[0].args.contractor, contractor)
     })
     
 })

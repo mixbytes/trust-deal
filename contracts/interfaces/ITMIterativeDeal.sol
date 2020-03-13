@@ -10,7 +10,7 @@ interface ITMIterativeDeal {
 
     /// @dev state machine of a deal
     enum States {CONSTRUCTED, INIT, PROPOSED_REVIEWER, RFP, WAIT4DEPOSIT, ITERATION, REVIEW, END}
-
+    event DealEndedUp(States when);
 
     /// @dev Current state of the deal.
     function getState() external view returns (States);
@@ -95,7 +95,7 @@ interface ITMIterativeDeal {
     function finishDeal() external;
 
     /// @dev The client funds a new iteration.
-    function newIteration() external payable;
+    function newIteration(uint256 fundingAmount) external payable;
 
 
     // ITERATION state functions
