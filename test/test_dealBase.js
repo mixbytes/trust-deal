@@ -213,6 +213,8 @@ contract('Deal. Base Test', async accounts => {
         )
     })
 
+    // TODO Cancellation in RFP test should be added
+
     it("should fail application approve", async() => {
         // wrong access
         await expectThrow(
@@ -234,5 +236,7 @@ contract('Deal. Base Test', async accounts => {
         let tx = await dealContract.approveApplication(contractor, {from: client})
         assert.equal(tx.logs[0].args.contractor, contractor)
     })
+
+    // TODO Cancellation in W4D should be added
     
 })

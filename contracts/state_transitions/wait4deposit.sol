@@ -15,6 +15,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner {
         }
 
         currentState == States.END;
+        emit DealEndedUp(States.WAIT4DEPOSIT);
     }
 
     function newIteration(uint256 fundingAmount) external payable onlyClient {
