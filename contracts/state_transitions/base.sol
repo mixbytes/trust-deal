@@ -68,9 +68,12 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         external
         onlyClient
     {
-        // TODO check strings for emptiness
         require(currentState == States.CONSTRUCTED, "Call from wrong state");
         require(iterationTimeSeconds > 60 * 60, "Iteration duration should be gt 1 hour");
+        require(
+            bytes(shortName).length > 0 && bytes(task).length > 0,
+            "Task description and short name can't be empty"
+        );
 
         taskShortName = shortName;
         taskDescription = task;
