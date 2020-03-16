@@ -17,14 +17,20 @@ contract DealDataRows {
     uint16 platformFee; // TODO
 
     uint32 iterationDuration;
+    uint32 iterationStart; // timestamp
 
     // TODO duration was choosed, because using final timestamp (deadline) causes multiple checks in every state that now() > deadline
     uint32 reviewerDecisionDuration;
-    uint32 reviewerDecisionTimeIntervalStart;
+    uint32 reviewerDecisionTimeIntervalStart; // timestamp
+
+    uint32 minutesDelivered; // TODO ??
+
+    uint256 dealBudget;
+    uint256 totalCosts;
 
     struct Application {
         string description;
-        mapping (address=>uint256) employees;
+        mapping (address=>uint256) employeesRates;
     }
     mapping (address => Application) applications;
 }

@@ -51,7 +51,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         );
 
         applications[msg.sender] = Application(application);
-        mapping(address => uint256) storage e = applications[msg.sender].employees;
+        mapping(address => uint256) storage e = applications[msg.sender].employeesRates;
         for (uint16 i; i < workers.length; i++) {
             require(
                 workers[i] != address(0) && rates[i] != 0,

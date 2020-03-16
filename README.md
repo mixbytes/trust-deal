@@ -10,6 +10,8 @@
 7. cancelRFP seems to be unfinished
 8. what if dealToken is address payable or client/contractor are contracts
 9. think about functions that definitely must emit events
+10. timestamps type cast (from 256 to 64)
+11. deal initialized emits client, we can remove getClient
 
 Run tests with:
 ```
