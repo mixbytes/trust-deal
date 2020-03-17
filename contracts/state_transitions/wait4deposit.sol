@@ -19,6 +19,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner {
         } else {
             // will revert if `balanceOf` fails
             uint256 balanceOfDeal = dealToken.balanceOf(address(this));
+            // TODO should we check balanceOfDeal gt 0??
             require(
                 dealToken.transfer(msg.sender, balanceOfDeal),
                 "Transfering client tokens on deal finish failed"

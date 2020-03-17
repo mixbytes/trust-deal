@@ -4,17 +4,15 @@ import './init.sol';
 import './proposedReviewer.sol';
 import './rfp.sol';
 import './wait4deposit.sol';
+import './iteration.sol';
 
-contract MainDealStateTransitioner is DealWait4DepositStateLogic,
+contract MainDealStateTransitioner is DealIterationStateLogic,
+    DealWait4DepositStateLogic,
     DealRFPStateLogic,
     DealProposedReviewerStateLogic,
     DealInitStateLogic
 {
     // Mocks
-
-    function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external {
-        1+1;
-    }
 
     function getIterationStat() external view returns (
         uint currentNumber,
@@ -46,10 +44,6 @@ contract MainDealStateTransitioner is DealWait4DepositStateLogic,
             new uint32[](1),
             ""
         );
-    }
-
-    function finishIteration() external {
-        1+1;
     }
 
     function reviewOk() external {

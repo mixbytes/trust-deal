@@ -5,35 +5,6 @@ import './base.sol';
 contract DealRFPStateLogic is BaseDealStateTransitioner {
     event ContractorChosen(address contractor);
 
-    // TODO look at dev-note 7th comment
-    function getReviewer() external view returns (address) {
-        require(currentState >= States.RFP, "Call from wrong state");
-        return reviewer;
-    }
-
-    function getInfo() external view returns (
-        States state,
-        address dealClient,
-        string memory shortName,
-        string memory task,
-        uint32 iterationTimeSeconds,
-        IERC20 paymentToken,
-        address dealReviewer,
-        uint16 feeBPS,
-        uint32 reviewTimeoutSeconds
-    ) {
-        require(currentState >= States.RFP, "Call from wrong state");
-        state = currentState;
-        dealClient = client;
-        shortName = taskShortName;
-        task = taskDescription;
-        iterationTimeSeconds = iterationDuration;
-        paymentToken = dealToken;
-        dealReviewer = reviewer;
-        feeBPS = reviewerFeeBPS;
-        reviewTimeoutSeconds = reviewerDecisionDuration;
-    }
-
     function newApplication(
         string calldata application,
         address[] calldata workers,
@@ -89,5 +60,34 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
             return false;
         }
         return true;
+    }
+
+    // TODO look at dev-note 7th comment
+    function getReviewer() external view returns (address) {
+        require(currentState >= States.RFP, "Call from wrong state");
+        return reviewer;
+    }
+
+    function getInfo() external view returns (
+        States state,
+        address dealClient,
+        string memory shortName,
+        string memory task,
+        uint32 iterationTimeSeconds,
+        IERC20 paymentToken,
+        address dealReviewer,
+        uint16 feeBPS,
+        uint32 reviewTimeoutSeconds
+    ) {
+        require(currentState >= States.RFP, "Call from wrong state");
+        state = currentState;
+        dealClient = client;
+        shortName = taskShortName;
+        task = taskDescription;
+        iterationTimeSeconds = iterationDuration;
+        paymentToken = dealToken;
+        dealReviewer = reviewer;
+        feeBPS = reviewerFeeBPS;
+        reviewTimeoutSeconds = reviewerDecisionDuration;
     }
 }

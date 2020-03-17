@@ -17,7 +17,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         // TODO save cast from 32 to 256?
         require(iterationStart.add(iterationDuration) > now, "Time for logging is out");
         require(bytes(info).length > 0, "Info string is empty");
-        require(_canLogMinutes(msg.sender, workMinutes), "Logged minutes over budget");
+        require(_isNotLoggedOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
         minutesDelivered = uint32(workMinutes.add(minutesDelivered));
         totalCosts = _getNewlyCountedTotalCost(msg.sender, workMinutes);
@@ -44,7 +44,11 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         return e[logger];
     }
 
-    function _canLogMinutes(address logger, uint32 workMinutes) internal view returns (bool) {
+    function _isNotLoggedOverBudget(address logger, uint32 workMinutes)
+        internal
+        view
+        returns (bool)
+    {
         uint256 budgetWithoutFees = _getBudgetWithoutFees();
         uint256 newlyCountedTotalCost = _getNewlyCountedTotalCost(logger, workMinutes);
         return budgetWithoutFees > newlyCountedTotalCost;
