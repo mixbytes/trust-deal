@@ -109,6 +109,8 @@ interface ITMIterativeDeal {
      */
     function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external;
 
+    event LoggedWork(uint32 indexed iterationNumber, uint32 logTimestamp, uint32 workMinutes, string info);
+
     /// @dev Stat of the current iteration.
     function getIterationStat() external view returns (
         uint currentNumber,
@@ -121,15 +123,6 @@ interface ITMIterativeDeal {
     function getTotalStat() external view returns (
         uint minutesLogged,
         uint spentBudget
-    );
-
-    /// @dev All the data logged using logWork.
-    function getLoggedData() external view returns (
-        uint32[] memory iterationNumber,
-        uint32[] memory logTimestamp,
-        uint32[] memory workMinutes,
-        uint32[] memory infoEntryLength,
-        string memory concatenatedInfos
     );
 
     /// @dev Signals to finish the current iteration and start a review.
