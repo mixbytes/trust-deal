@@ -291,7 +291,7 @@ contract('Deal. Base Test', async accounts => {
     })
 
     it("should fund new iteration", async() => {
-        let funding = 50000;
+        let funding = 100000;
         await dealContract.newIteration(funding, {from: client});
 
         let balanceOfDeal = await dealTokenContract.balanceOf(dealContract.address);
@@ -308,7 +308,7 @@ contract('Deal. Base Test', async accounts => {
     it("should fail work logging", async() => {
         // invalid access
         await expectThrow(
-            dealContract.logWork(10000000, 10000, "mock", {from: contractor})
+            dealContract.logWork(10000000, 10, "mock", {from: contractor})
         )
         // empty info param
         await expectThrow(
@@ -332,12 +332,15 @@ contract('Deal. Base Test', async accounts => {
         await revertToSnapShot(snapshotId)
 
         // logging minutes over budget
+        // budgetWithoutFees = 99950, worker1Rate = 1000 => maxMin = 99950 * 60 / 1000 = 5997
+        // TODO budgetWithoutFees does not containt platform fee
         await expectThrow(
-            dealContract.logWork(10000000, 2**32 - 1, "mock", {from: worker1})
+            dealContract.logWork(10000000, 5997, "mock", {from: worker1})
         )
         
     })
 
     it("should log work", async() => {
+        
     })
 })

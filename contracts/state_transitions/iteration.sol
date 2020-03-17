@@ -72,7 +72,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         returns (uint256)
     {
         uint256 loggerRate = _getLoggerRate(logger);
-        uint256 loggerCosts = workMinutes.div(loggerRate.mul(60));
+        uint256 loggerCosts = workMinutes.mul(loggerRate).div(60);
         return totalCosts.add(loggerCosts);
     }
 }
