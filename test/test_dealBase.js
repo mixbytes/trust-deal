@@ -340,7 +340,27 @@ contract('Deal. Base Test', async accounts => {
         
     })
 
+    // TODO dev-note comment 12
     it("should log work", async() => {
-        
+        await dealContract.logWork(10000000, 60, "60 mins", {from: worker1});
+        await dealContract.logWork(10000000, 60, "60 mins", {from: worker2});
+    })
+
+    // TODO test finish iteration with timeout
+    it("should fail finish iteration", async() => {
+        // invalid access
+        await expectThrow(
+            dealContract.finishIteration({from: worker1})
+        )
+    })
+
+    it("should finish iteration", async() => {
+        await dealContract.finishIteration({from: contractor})
+    })
+
+    it("should fail work logging due to call from wrong state", async() => {
+        await expectThrow(
+            dealContract.logWork(10000000, 60, "60 mins", {from: worker1})
+        )
     })
 })

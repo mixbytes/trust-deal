@@ -8,6 +8,8 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     using SafeMath for uint32;
     using SafeMath for uint256;
 
+    // TODO view funcs
+
     event LoggedWork(address employee, uint32 logTimestamp, uint32 workMinutes, string info);
 
     function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external {
