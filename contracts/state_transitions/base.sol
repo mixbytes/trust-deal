@@ -10,11 +10,12 @@ contract DealDataRows {
     address client;
     address contractor;
     address reviewer;
+    address platform;
 
     IERC20 public dealToken;
 
     uint16 reviewerFeeBPS;
-    uint16 platformFee; // TODO
+    uint16 platformFeeBPS; // TODO
 
     uint32 iterationDuration;
     uint32 iterationStart; // timestamp
@@ -23,10 +24,12 @@ contract DealDataRows {
     uint32 reviewerDecisionDuration;
     uint32 reviewerDecisionTimeIntervalStart; // timestamp
 
-    uint32 minutesDelivered; // TODO ??
+    uint32 minutesDelivered; // TODO log?
+    uint32 iterationNumber;
 
     uint256 dealBudget;
-    uint256 totalCosts;
+    uint256 totalCosts; // TODO change name to contractorsReward
+    mapping (uint32 => uint256) totalCostsOnIteration;
 
     struct Application {
         string description;

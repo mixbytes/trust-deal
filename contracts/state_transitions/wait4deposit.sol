@@ -6,6 +6,7 @@ import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract DealWait4DepositStateLogic is BaseDealStateTransitioner {
     using Uint256Caster for uint256;
+    using SafeMath for uint32;
     using SafeMath for uint256;
 
     event DealFunded(uint256 fundingAmount);
@@ -45,6 +46,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner {
         }
 
         dealBudget = dealBudget.add(fundingAmount);
+        iterationNumber = uint32(iterationNumber.add(1));
         iterationStart = now.toUint32();
         currentState = States.ITERATION;
         emit DealFunded(fundingAmount);

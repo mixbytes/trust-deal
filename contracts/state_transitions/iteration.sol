@@ -1,10 +1,12 @@
 pragma solidity 0.5.7;
 
-import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-
 import './base.sol';
 
+import '../utils/Uint256Caster.sol';
+import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 contract DealIterationStateLogic is BaseDealStateTransitioner {
+    using Uint256Caster for uint256;
     using SafeMath for uint32;
     using SafeMath for uint256;
 
@@ -21,7 +23,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(bytes(info).length > 0, "Info string is empty");
         require(_isNotLoggedOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
-        minutesDelivered = uint32(workMinutes.add(minutesDelivered));
+        minutesDelivered = uint32(workMinutes.add(minutesDelivered)); // TODO log?
         totalCosts = _getNewlyCountedTotalCost(msg.sender, workMinutes);
         emit LoggedWork(msg.sender, logTimestamp, workMinutes, info);
     }
@@ -30,10 +32,11 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(currentState == States.ITERATION, "Call from wrong state");
         require(
             (msg.sender == contractor && iterationStart.add(iterationDuration) > now) ||
-            now > iterationStart.add(iterationDuration),
+            now >= iterationStart.add(iterationDuration),
             "Actor can't finish iteration"
         );
 
+        reviewerDecisionTimeIntervalStart = now.toUint32();
         currentState = States.REVIEW;
     }
 
@@ -58,14 +61,11 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     }
 
     function _getBudgetWithoutFees() internal view returns (uint256) {
-        uint256 budgetCleanedFromReviewerFee = dealBudget.sub(
-            dealBudget.mul(reviewerFeeBPS).div(10000)
-        );
+        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
         // cleane platform fee
-        uint256 budgetCleanedFromAllFees = budgetCleanedFromReviewerFee.sub(
-            budgetCleanedFromReviewerFee.mul(platformFee).div(10000)
-        );
-        return budgetCleanedFromAllFees;
+        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
+
+        return dealBudget.sub(reviewerFeeAmount).sub(platformFeeAmount);
     }
 
     function _getNewlyCountedTotalCost(address logger, uint32 workMinutes)

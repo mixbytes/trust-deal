@@ -5,8 +5,10 @@ import './proposedReviewer.sol';
 import './rfp.sol';
 import './wait4deposit.sol';
 import './iteration.sol';
+import './review.sol';
 
-contract MainDealStateTransitioner is DealIterationStateLogic,
+contract MainDealStateTransitioner is DealReviewStateLogic,
+    DealIterationStateLogic,
     DealWait4DepositStateLogic,
     DealRFPStateLogic,
     DealProposedReviewerStateLogic,
@@ -28,29 +30,5 @@ contract MainDealStateTransitioner is DealIterationStateLogic,
         uint spentBudget
     ) {
         return (0,0);
-    }
-
-    function getLoggedData() external view returns (
-        uint32[] memory iterationNumber,
-        uint32[] memory logTimestamp,
-        uint32[] memory workMinutes,
-        uint32[] memory infoEntryLength,
-        string memory concatenatedInfos
-    ) {
-        return (
-            new uint32[](1),
-            new uint32[](1),
-            new uint32[](1),
-            new uint32[](1),
-            ""
-        );
-    }
-
-    function reviewOk() external {
-        1+1;
-    }
-
-    function reviewFailed() external {
-        1+1;
     }
 }
