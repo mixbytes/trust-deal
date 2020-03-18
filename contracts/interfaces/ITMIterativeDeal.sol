@@ -35,11 +35,11 @@ interface ITMIterativeDeal {
     /**
      * @dev The client proposes participation to a reviewer.
      *
-     * @param dealReviewer proposed reviewer
+     * @param reviewerCandidate proposed reviewer
      * @param feeBPS reviewer fee in basis points
-     * @param reviewTimeoutSeconds timeout for the review phase
+     * @param reviewIntervalSeconds timeout for the review phase
      */
-    function proposeReviewer(address dealReviewer, uint16 feeBPS, uint32 reviewTimeoutSeconds) external;
+    function proposeReviewer(address reviewerCandidate, uint16 feeBPS, uint32 reviewIntervalSeconds) external;
 
 
     // PROPOSED_REVIEWER state functions
@@ -65,9 +65,9 @@ interface ITMIterativeDeal {
         string memory task,
         uint32 iterationTimeSeconds,
         IERC20 meanOfPayment,
-        address dealReviewer,
+        address reviewerCandidate,
         uint16 feeBPS,
-        uint32 reviewTimeoutSeconds
+        uint32 reviewIntervalSeconds
     );
 
     /**

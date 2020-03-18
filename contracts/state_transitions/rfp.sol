@@ -75,9 +75,9 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         string memory task,
         uint32 iterationTimeSeconds,
         IERC20 meanOfPayment,
-        address dealReviewer,
+        address reviewerCandidate,
         uint16 feeBPS,
-        uint32 reviewTimeoutSeconds
+        uint32 reviewIntervalSeconds
     ) {
         require(currentState >= States.RFP, "Call from wrong state");
         state = currentState;
@@ -86,8 +86,8 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         task = taskDescription;
         iterationTimeSeconds = iterationDuration;
         meanOfPayment = dealMeanOfPayment;
-        dealReviewer = reviewer;
+        reviewerCandidate = reviewer;
         feeBPS = reviewerFeeBPS;
-        reviewTimeoutSeconds = reviewerDecisionDuration;
+        reviewIntervalSeconds = reviewerDecisionDuration;
     }
 }
