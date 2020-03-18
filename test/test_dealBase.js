@@ -19,6 +19,7 @@ contract('Deal. Base Test', async accounts => {
     const worker1 = accounts[4];
     const worker2 = accounts[5];
     const contractor2 = accounts[6];
+    const platform = accounts[7];
 
     let dealContract;
     let dealTokenContract;
@@ -72,7 +73,7 @@ contract('Deal. Base Test', async accounts => {
         // Preparing and deploying token contract
         dealTokenContract = await DealToken.new({from: client});
         
-        dealContract = await Deal.new({from: client});
+        dealContract = await Deal.new(platform, 5, {from: client});
     });
 
     it("should fail INIT", async() => {
@@ -362,5 +363,89 @@ contract('Deal. Base Test', async accounts => {
         await expectThrow(
             dealContract.logWork(10000000, 60, "60 mins", {from: worker1})
         )
+    })
+
+    it("should fail review-ok", async() => {
+        // invalid access
+        await expectThrow(
+            dealContract.reviewOk({from: contractor})
+        )
+
+        // TODO test review with timeout
+    })
+
+    it("should review ok", async() => {
+        let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
+        assert.equal(dealBudget, 100000)
+
+        await dealContract.reviewOk({from: reviewer2})
+
+        let costOfWorker1 = 1000; // 60 mins logged, 1hour = 1000
+        let costOfWorker2 = 1000; // 60 mins logged, 1hour = 1000
+
+        let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
+        assert.equal(costOfWorker1 + costOfWorker2, tokenBalanceOfContractor)
+        
+        let reviewerReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
+        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewer2)
+        assert.equal(tokenBalanceOfReviewer, reviewerReward)
+
+        let platformReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
+        let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
+        assert.equal(tokenBalanceOfPlatform, platformReward)
+    })
+
+    it("should fail review actions", async() => {
+        // wrong states
+        await expectThrow(
+            dealContract.reviewOk({from: reviewer2})
+        )
+        await expectThrow(
+            dealContract.reviewFailed({from: reviewer2})
+        )
+    })
+
+    it("should fund new iteration", async() => {
+        await dealTokenContract.approve(dealContract.address, 20000, {from: client})
+        await dealContract.newIteration(20000, {from: client})
+
+        // 97900 + 20000
+    })
+
+    it("should log work", async() => {
+        await dealContract.logWork(100000000, 120, "info", {from: worker1})
+        // cost 2 * 1000 = 2000
+    })
+
+    it("should finish iteration because of timeout", async() => {
+        // timeout is met
+        let currentSnapshot = await takeSnapshot();
+        snapshotId = currentSnapshot['result']
+
+        await time.advanceBlock()
+        let start = await time.latest()
+        let end = start.add(time.duration.days(14));
+        await time.increaseTo(end)
+
+        // iteration timeout is met
+        await dealContract.finishIteration({from: worker1})
+    })
+
+    it("should review fail", async() => {
+        let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
+        assert.equal(dealBudget, 97900 + 20000)
+        await dealContract.reviewFailed({from: reviewer2})
+
+        let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
+        let worker1Costs = 120/60 * 1000; // 2000
+        assert.equal(tokenBalanceOfContractor, 2000 + worker1Costs);
+
+        let platformReward = Math.floor(dealBudget * 5 / 100 / 100); // 58
+        let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
+        assert.equal(tokenBalanceOfPlatform, 50 + platformReward)
+
+        let reviewerReward = Math.floor(dealBudget * 5 / 100 / 100); // 58
+        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewer2)
+        assert.equal(tokenBalanceOfReviewer, 50 + reviewerReward)       
     })
 })

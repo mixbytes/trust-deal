@@ -7,6 +7,8 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
     using SafeMath for uint32;
     using SafeMath for uint256;
 
+    event Lol(uint256 A);
+
     // TODO dirty
     function reviewOk() external {
         require(currentState == States.REVIEW, "Call from wrong state");
@@ -46,6 +48,7 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
             );
         }
 
+        dealBudget = dealBudget.sub(totalCosts).sub(platformFeeAmount).sub(reviewerFeeAmount);
         totalCostsOnIteration[iterationNumber] = totalCosts;
         totalCosts = 0;
         currentState = States.WAIT4DEPOSIT;
@@ -79,7 +82,7 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
             uint256 balanceOfDeal = dealToken.balanceOf(address(this));
             // TODO should we check balanceOfDeal gt 0??
             require(
-                dealToken.transfer(msg.sender, balanceOfDeal),
+                dealToken.transfer(client, balanceOfDeal),
                 "Transfering client tokens on deal finish failed"
             );
         }

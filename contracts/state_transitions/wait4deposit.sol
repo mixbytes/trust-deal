@@ -10,6 +10,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner {
     using SafeMath for uint256;
 
     event DealFunded(uint256 fundingAmount);
+    event Lol(uint256 A);
 
     function finishDeal() external onlyClient {
         require(currentState == States.WAIT4DEPOSIT, "Call from wrong state");
