@@ -24,9 +24,9 @@ interface ITMIterativeDeal {
      * @param shortName short name
      * @param task task description
      * @param iterationTimeSeconds maximum duration of an iteration (wall clock seconds)
-     * @param paymentToken token used for payments
+     * @param meanOfPayment mean of payment for the deal. If address(0), then ethers are used.
      */
-    function init(string calldata shortName, string calldata task, uint32 iterationTimeSeconds, IERC20 paymentToken)
+    function init(string calldata shortName, string calldata task, uint32 iterationTimeSeconds, IERC20 meanOfPayment)
         external;
 
 
@@ -64,7 +64,7 @@ interface ITMIterativeDeal {
         string memory shortName,
         string memory task,
         uint32 iterationTimeSeconds,
-        IERC20 paymentToken,
+        IERC20 meanOfPayment,
         address dealReviewer,
         uint16 feeBPS,
         uint32 reviewTimeoutSeconds

@@ -74,7 +74,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         string memory shortName,
         string memory task,
         uint32 iterationTimeSeconds,
-        IERC20 paymentToken,
+        IERC20 meanOfPayment,
         address dealReviewer,
         uint16 feeBPS,
         uint32 reviewTimeoutSeconds
@@ -85,7 +85,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         shortName = taskShortName;
         task = taskDescription;
         iterationTimeSeconds = iterationDuration;
-        paymentToken = dealToken;
+        meanOfPayment = dealMeanOfPayment;
         dealReviewer = reviewer;
         feeBPS = reviewerFeeBPS;
         reviewTimeoutSeconds = reviewerDecisionDuration;

@@ -12,7 +12,7 @@ contract DealDataRows {
     address reviewer;
     address platform;
 
-    IERC20 public dealToken;
+    IERC20 public dealMeanOfPayment;
 
     uint16 reviewerFeeBPS;
     uint16 platformFeeBPS;
@@ -45,7 +45,7 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         string shortName,
         string task,
         uint32 iterationDuration,
-        IERC20 paymentToken
+        IERC20 meanOfPayment
     );
 
     modifier onlyClient {
@@ -60,10 +60,12 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
 
     States currentState;
 
+    // TODO to events
     function getState() external view returns (States) {
         return currentState;
     }
 
+    // TODO to events
     function getClient() external view returns (address) {
         return client;
     }
@@ -72,7 +74,7 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         string calldata shortName,
         string calldata task,
         uint32 iterationTimeSeconds,
-        IERC20 paymentToken
+        IERC20 meanOfPayment
     )
         external
         onlyClient
@@ -87,9 +89,9 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         taskShortName = shortName;
         taskDescription = task;
         iterationDuration = iterationTimeSeconds;
-        dealToken = paymentToken;
+        dealMeanOfPayment = meanOfPayment;
 
         currentState = States.INIT;
-        emit DealInitialized(msg.sender, shortName, task, iterationTimeSeconds, paymentToken);
+        emit DealInitialized(msg.sender, shortName, task, iterationTimeSeconds, meanOfPayment);
     }
 }

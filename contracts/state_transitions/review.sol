@@ -21,7 +21,7 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
         uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
         uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
 
-        if (address(dealToken) == address(0)) {
+        if (address(dealMeanOfPayment) == address(0)) {
             // using ethers, not tokens
             address(uint160(contractor)).transfer(contractorsReward); // TODO dev-note 13
             address(uint160(platform)).transfer(platformFeeAmount);
@@ -31,19 +31,19 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
             }
         } else {
             require(
-                dealToken.transfer(contractor, contractorsReward),
+                dealMeanOfPayment.transfer(contractor, contractorsReward),
                 "Contractor reward transfer failed"
             );
 
             if (reviewerDecisionTimeIntervalStart.add(reviewerDecisionDuration) > now) {
                 require(
-                    dealToken.transfer(reviewer, reviewerFeeAmount),
+                    dealMeanOfPayment.transfer(reviewer, reviewerFeeAmount),
                     "Reviewer reward transfer failed"
                 );
             }
 
             require(
-                dealToken.transfer(platform, platformFeeAmount),
+                dealMeanOfPayment.transfer(platform, platformFeeAmount),
                 "Platform reward transfer failed"
             );
         }
@@ -60,29 +60,29 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
         uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
         uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
 
-        if (address(dealToken) == address(0)) {
+        if (address(dealMeanOfPayment) == address(0)) {
             address(uint160(contractor)).transfer(contractorsReward); // TODO dev-note 13
             address(uint160(platform)).transfer(platformFeeAmount);
             address(uint160(reviewer)).transfer(reviewerFeeAmount);
             address(uint160(client)).transfer(address(this).balance);
         } else {
             require(
-                dealToken.transfer(contractor, contractorsReward),
+                dealMeanOfPayment.transfer(contractor, contractorsReward),
                 "Contractor reward transfer failed"
             );
             require(
-                dealToken.transfer(platform, platformFeeAmount),
+                dealMeanOfPayment.transfer(platform, platformFeeAmount),
                 "Platform reward transfer failed"
             );
             require(
-                dealToken.transfer(reviewer, reviewerFeeAmount),
+                dealMeanOfPayment.transfer(reviewer, reviewerFeeAmount),
                 "Reviewer reward transfer failed"
             );
             // will revert if `balanceOf` fails
-            uint256 balanceOfDeal = dealToken.balanceOf(address(this));
+            uint256 balanceOfDeal = dealMeanOfPayment.balanceOf(address(this));
             // TODO should we check balanceOfDeal gt 0??
             require(
-                dealToken.transfer(client, balanceOfDeal),
+                dealMeanOfPayment.transfer(client, balanceOfDeal),
                 "Transfering client tokens on deal finish failed"
             );
         }
