@@ -15,21 +15,21 @@ contract DealDataRows {
     IERC20 public dealToken;
 
     uint16 reviewerFeeBPS;
-    uint16 platformFeeBPS; // TODO
+    uint16 platformFeeBPS;
 
     uint32 iterationDuration;
     uint32 iterationStart; // timestamp
 
-    // TODO duration was choosed, because using final timestamp (deadline) causes multiple checks in every state that now() > deadline
+    // TODO issue 1;
     uint32 reviewerDecisionDuration;
     uint32 reviewerDecisionTimeIntervalStart; // timestamp
 
-    uint32 minutesDelivered; // TODO log?
+    uint32 minutesDelivered; // TODO to events
     uint32 iterationNumber;
 
     uint256 dealBudget;
-    uint256 totalCosts; // TODO change name to contractorsReward
-    mapping (uint32 => uint256) totalCostsOnIteration;
+    uint256 contractorsReward; // TODO change name to contractorsReward
+    mapping (uint32 => uint256) contractorsRewardOnIteration;
 
     struct Application {
         string description;

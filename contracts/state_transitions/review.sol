@@ -23,7 +23,7 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
 
         if (address(dealToken) == address(0)) {
             // using ethers, not tokens
-            address(uint160(contractor)).transfer(totalCosts); // TODO dev-note 13
+            address(uint160(contractor)).transfer(contractorsReward); // TODO dev-note 13
             address(uint160(platform)).transfer(platformFeeAmount);
 
             if (reviewerDecisionTimeIntervalStart.add(reviewerDecisionDuration) > now) {
@@ -31,7 +31,7 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
             }
         } else {
             require(
-                dealToken.transfer(contractor, totalCosts),
+                dealToken.transfer(contractor, contractorsReward),
                 "Contractor reward transfer failed"
             );
 
@@ -48,9 +48,9 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
             );
         }
 
-        dealBudget = dealBudget.sub(totalCosts).sub(platformFeeAmount).sub(reviewerFeeAmount);
-        totalCostsOnIteration[iterationNumber] = totalCosts;
-        totalCosts = 0;
+        dealBudget = dealBudget.sub(contractorsReward).sub(platformFeeAmount).sub(reviewerFeeAmount);
+        contractorsRewardOnIteration[iterationNumber] = contractorsReward;
+        contractorsReward = 0;
         currentState = States.WAIT4DEPOSIT;
     }
 
@@ -61,13 +61,13 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
         uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
 
         if (address(dealToken) == address(0)) {
-            address(uint160(contractor)).transfer(totalCosts); // TODO dev-note 13
+            address(uint160(contractor)).transfer(contractorsReward); // TODO dev-note 13
             address(uint160(platform)).transfer(platformFeeAmount);
             address(uint160(reviewer)).transfer(reviewerFeeAmount);
             address(uint160(client)).transfer(address(this).balance);
         } else {
             require(
-                dealToken.transfer(contractor, totalCosts),
+                dealToken.transfer(contractor, contractorsReward),
                 "Contractor reward transfer failed"
             );
             require(

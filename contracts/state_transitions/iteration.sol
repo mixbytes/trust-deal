@@ -24,7 +24,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(_isNotLoggedOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
         minutesDelivered = uint32(workMinutes.add(minutesDelivered)); // TODO log?
-        totalCosts = _getNewlyCountedTotalCost(msg.sender, workMinutes);
+        contractorsReward = _getNewlyCountedTotalCost(msg.sender, workMinutes);
         emit LoggedWork(msg.sender, logTimestamp, workMinutes, info);
     }
 
@@ -75,6 +75,6 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     {
         uint256 loggerRate = _getLoggerRate(logger);
         uint256 loggerCosts = workMinutes.mul(loggerRate).div(60);
-        return totalCosts.add(loggerCosts);
+        return contractorsReward.add(loggerCosts);
     }
 }
