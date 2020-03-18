@@ -14,6 +14,7 @@
 11. deal initialized emits client, we can remove getClient
 12. what if 1 of workers do not log?
 13. use address payable for contractor and reviewer?
+14. move all events, that are used in front, to interface
 
 Run tests with:
 ```

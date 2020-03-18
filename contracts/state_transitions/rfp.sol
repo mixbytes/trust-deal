@@ -45,7 +45,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
         require(contractorForDeal != address(0), ERROR_ZERO_ADDRESS);
         require(
-            _hasProvidedApplication(contractorForDeal),
+            hasProvidedApplication(contractorForDeal),
             "Provided contractor hasn't got any applications"
         );
 
@@ -54,7 +54,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         emit ContractorChosen(contractor);
     }
 
-    function _hasProvidedApplication(address checkingContractor) internal view returns (bool) {
+    function hasProvidedApplication(address checkingContractor) internal view returns (bool) {
         Application storage a = applications[checkingContractor];
         if (bytes(a.description).length == 0) {
             return false;
@@ -62,7 +62,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         return true;
     }
 
-    // TODO look at dev-note 7th comment
+    // TODO to event
     function getReviewer() external view returns (address) {
         require(currentState >= States.RFP, ERROR_WRONG_STATE_CALL);
         return reviewer;
@@ -75,7 +75,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         string memory task,
         uint32 iterationTimeSeconds,
         IERC20 meanOfPayment,
-        address reviewerCandidate,
+        address dealReviewer,
         uint16 feeBPS,
         uint32 reviewIntervalSeconds
     ) {
@@ -86,7 +86,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         task = taskDescription;
         iterationTimeSeconds = iterationDuration;
         meanOfPayment = dealMeanOfPayment;
-        reviewerCandidate = reviewer;
+        dealReviewer = reviewer;
         feeBPS = reviewerFeeBPS;
         reviewIntervalSeconds = reviewerDecisionDuration;
     }

@@ -65,7 +65,7 @@ interface ITMIterativeDeal {
         string memory task,
         uint32 iterationTimeSeconds,
         IERC20 meanOfPayment,
-        address reviewerCandidate,
+        address dealReviewer,
         uint16 feeBPS,
         uint32 reviewIntervalSeconds
     );
