@@ -11,7 +11,7 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
 
     // TODO dirty
     function reviewOk() external {
-        require(currentState == States.REVIEW, ERROR_CAL_FROM_WRONG_STATE);
+        require(currentState == States.REVIEW, ERROR_WRONG_STATE_CALL);
         require((msg.sender == reviewer &&
                 reviewerDecisionTimeIntervalStart.add(reviewerDecisionDuration) > now
             ) || now >= reviewerDecisionTimeIntervalStart.add(reviewerDecisionDuration),
@@ -55,7 +55,7 @@ contract DealReviewStateLogic is BaseDealStateTransitioner {
     }
 
     function reviewFailed() external onlyReviewer {
-        require(currentState == States.REVIEW, ERROR_CAL_FROM_WRONG_STATE);
+        require(currentState == States.REVIEW, ERROR_WRONG_STATE_CALL);
 
         uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
         uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);

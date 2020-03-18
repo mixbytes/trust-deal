@@ -12,7 +12,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
     )
         external
     {
-        require(currentState == States.RFP, ERROR_CAL_FROM_WRONG_STATE);
+        require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
         require(workers.length == rates.length,"Workers and rates arrays should be equal");
         require(workers.length > 0 && workers.length < 100, "Array params have wrong lengths");
         require(bytes(application).length > 0, "Empty application description provided");
@@ -35,14 +35,14 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
 
     function cancelRFP() external onlyClient {
         // TODO raw version, probably will change
-        require(currentState == States.RFP, ERROR_CAL_FROM_WRONG_STATE);
+        require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
 
         currentState == States.END;
         emit DealEndedUp(States.RFP);
     }
 
     function approveApplication(address contractorForDeal) external onlyClient {
-        require(currentState == States.RFP, ERROR_CAL_FROM_WRONG_STATE);
+        require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
         require(contractorForDeal != address(0), ERROR_ZERO_ADDRESS);
         require(
             _hasProvidedApplication(contractorForDeal),
@@ -64,7 +64,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
 
     // TODO look at dev-note 7th comment
     function getReviewer() external view returns (address) {
-        require(currentState >= States.RFP, ERROR_CAL_FROM_WRONG_STATE);
+        require(currentState >= States.RFP, ERROR_WRONG_STATE_CALL);
         return reviewer;
     }
 
@@ -79,7 +79,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         uint16 feeBPS,
         uint32 reviewIntervalSeconds
     ) {
-        require(currentState >= States.RFP, ERROR_CAL_FROM_WRONG_STATE);
+        require(currentState >= States.RFP, ERROR_WRONG_STATE_CALL);
         state = currentState;
         dealClient = client;
         shortName = taskShortName;

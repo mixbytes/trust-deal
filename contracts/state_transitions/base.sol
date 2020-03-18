@@ -40,8 +40,8 @@ contract DealDataRows {
 
 contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
 
-    string private constant ERROR_WRONG_STATE_CALL = "Call from wrong state";
-    string private constant ERROR_ZERO_ADDRESS = "Address value can't be zero";
+    string internal constant ERROR_WRONG_STATE_CALL = "Call from wrong state";
+    string internal constant ERROR_ZERO_ADDRESS = "Address value can't be zero";
 
     modifier onlyClient {
         require(msg.sender == client, "Only clients action");
