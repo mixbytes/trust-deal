@@ -40,13 +40,8 @@ contract DealDataRows {
 
 contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
 
-    event DealInitialized(
-        address who,
-        string shortName,
-        string task,
-        uint32 iterationDuration,
-        IERC20 meanOfPayment
-    );
+    string private constant ERROR_WRONG_STATE_CALL = "Call from wrong state";
+    string private constant ERROR_ZERO_ADDRESS = "Address value can't be zero";
 
     modifier onlyClient {
         require(msg.sender == client, "Only clients action");
@@ -59,6 +54,14 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
     }
 
     States currentState;
+
+    event DealInitialized(
+        address who,
+        string shortName,
+        string task,
+        uint32 iterationDuration,
+        IERC20 meanOfPayment
+    );
 
     // TODO to events
     function getState() external view returns (States) {
@@ -79,7 +82,7 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         external
         onlyClient
     {
-        require(currentState == States.CONSTRUCTED, "Call from wrong state");
+        require(currentState == States.CONSTRUCTED, ERROR_WRONG_STATE_CALL);
         require(iterationTimeSeconds > 60 * 60, "Iteration duration should be gt 1 hour");
         require(
             bytes(shortName).length > 0 && bytes(task).length > 0,

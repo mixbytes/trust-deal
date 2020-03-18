@@ -13,7 +13,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner {
     event Lol(uint256 A);
 
     function finishDeal() external onlyClient {
-        require(currentState == States.WAIT4DEPOSIT, "Call from wrong state");
+        require(currentState == States.WAIT4DEPOSIT, ERROR_CAL_FROM_WRONG_STATE);
 
         if (address(dealMeanOfPayment) == address(0)) {
             // using ethers, not tokens
@@ -33,7 +33,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner {
     }
 
     function newIteration(uint256 fundingAmount) external payable onlyClient {
-        require(currentState == States.WAIT4DEPOSIT, "Call from wrong state");
+        require(currentState == States.WAIT4DEPOSIT, ERROR_CAL_FROM_WRONG_STATE);
 
         if (address(dealMeanOfPayment) == address(0)) {
             require(msg.value == fundingAmount, "Funded less than stated");

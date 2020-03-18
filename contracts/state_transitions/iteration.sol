@@ -16,7 +16,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
 
     function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external {
         // TODO requirements for logTimestamp?
-        require(currentState == States.ITERATION, "Call from wrong state");
+        require(currentState == States.ITERATION, ERROR_CAL_FROM_WRONG_STATE);
         require(_isEmployee(msg.sender), "Call from logger, who is not contractors employee");
         // TODO save cast from 32 to 256?
         require(iterationStart.add(iterationDuration) > now, "Time for logging is out");
@@ -29,7 +29,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     }
 
     function finishIteration() external {
-        require(currentState == States.ITERATION, "Call from wrong state");
+        require(currentState == States.ITERATION, ERROR_CAL_FROM_WRONG_STATE);
         require(
             (msg.sender == contractor && iterationStart.add(iterationDuration) > now) ||
             now >= iterationStart.add(iterationDuration),

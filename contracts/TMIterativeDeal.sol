@@ -5,7 +5,7 @@ import './interfaces/IDealVersioning.sol';
 
 contract TMIterativeDeal is MainDealStateTransitioner, IDealVersioning {
     constructor(address platformAddress, uint16 platformFeeInBIPS) public {
-        require(platformAddress != address(0), "Platform address couldn't be zero address");
+        require(platformAddress != address(0), ERROR_ZERO_ADDRESS);
         require(
             platformFeeInBIPS > 0 && platformFeeInBIPS < 10000,
             "platform fee BPS could be only in range (0, 10000)"
