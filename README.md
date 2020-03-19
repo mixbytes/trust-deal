@@ -1,9 +1,9 @@
 # trust-deal
 
-## dev-notes
-1. reviewer can be got from ReviewerAcceptedConditions 
-2. think about functions that definitely must emit events
-14. move all events, that are used in front, to interface
+## To be done:
+1) resolve todos
+2) resolve issues on GitHub
+3) requirement for logTimestamp
 
 Run tests with:
 ```

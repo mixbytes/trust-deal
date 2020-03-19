@@ -28,7 +28,7 @@ contract DealDataRows {
     uint32 iterationNumber;
 
     uint256 dealBudget;
-    uint256 contractorsReward; // TODO change name to contractorsReward
+    uint256 contractorsReward;
     mapping (uint32 => uint256) contractorsRewardOnIteration;
 
     struct Application {
