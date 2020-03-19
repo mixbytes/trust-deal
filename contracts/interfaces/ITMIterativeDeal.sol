@@ -39,7 +39,7 @@ interface ITMIterativeDeal {
      * @param feeBPS reviewer fee in basis points
      * @param reviewIntervalSeconds timeout for the review phase
      */
-    function proposeReviewer(address reviewerCandidate, uint16 feeBPS, uint32 reviewIntervalSeconds) external;
+    function proposeReviewer(address payable reviewerCandidate, uint16 feeBPS, uint32 reviewIntervalSeconds) external;
 
 
     // PROPOSED_REVIEWER state functions
@@ -86,7 +86,7 @@ interface ITMIterativeDeal {
     function cancelRFP() external;
 
     /// @dev The client approves the application made by `contractorForDeal`.
-    function approveApplication(address contractorForDeal) external;
+    function approveApplication(address payable contractorForDeal) external;
 
 
     // WAIT4DEPOSIT state functions

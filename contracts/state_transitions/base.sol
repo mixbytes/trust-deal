@@ -7,10 +7,10 @@ contract DealDataRows {
     string taskShortName;
     string taskDescription;
 
-    address client;
-    address contractor;
-    address reviewer;
-    address platform;
+    address payable client;
+    address payable contractor;
+    address payable reviewer;
+    address payable platform;
 
     IERC20 public dealMeanOfPayment;
 
@@ -33,7 +33,7 @@ contract DealDataRows {
 
     struct Application {
         string description;
-        mapping (address=>uint256) employeesRates;
+        mapping (address => uint256) employeesRates;
     }
     mapping (address => Application) applications;
 }

@@ -4,7 +4,7 @@ import './state_transitions/mainTransitioner.sol';
 import './interfaces/IDealVersioning.sol';
 
 contract TMIterativeDeal is MainDealStateTransitioner, IDealVersioning {
-    constructor(address platformAddress, uint16 platformFeeInBIPS) public {
+    constructor(address payable platformAddress, uint16 platformFeeInBIPS) public {
         require(platformAddress != address(0), ERROR_ZERO_ADDRESS);
         require(
             platformFeeInBIPS > 0 && platformFeeInBIPS < 10000,

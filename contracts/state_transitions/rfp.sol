@@ -41,7 +41,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         emit DealEndedUp(States.RFP);
     }
 
-    function approveApplication(address contractorForDeal) external onlyClient {
+    function approveApplication(address payable contractorForDeal) external onlyClient {
         require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
         require(contractorForDeal != address(0), ERROR_ZERO_ADDRESS);
         require(

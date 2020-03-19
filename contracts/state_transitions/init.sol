@@ -6,7 +6,7 @@ contract DealInitStateLogic is BaseDealStateTransitioner {
     event ReviewerProposed(address reviewer, uint16 reviewerFeeBPS, uint32 decisionDuration);
 
     function proposeReviewer(
-        address reviewerCandidate,
+        address payable reviewerCandidate,
         uint16 feeBPS,
         uint32 reviewIntervalSeconds
     )

@@ -9,7 +9,7 @@ contract DealPaymentsManager is DealDataRows {
     function payRestToClient() internal {
         if (address(dealMeanOfPayment) == address(0)) {
             uint256 restFunds = address(this).balance;
-            address(uint160(client)).transfer(restFunds);
+            client.transfer(restFunds);
             emit TransferedRestOfFunds(restFunds);
         } else {
             // will revert if `balanceOf` fails
@@ -31,8 +31,8 @@ contract DealPaymentsManager is DealDataRows {
         } else {
             require(fundingAmount > 10000, "Funding amount is very little");
             require(
-                dealMeanOfPayment.transferFrom(msg.sender, address(this), fundingAmount),
-                "Reward lock for iteration failed"
+                dealMeanOfPayment.transferFrom(client, address(this), fundingAmount),
+                "Locking funding iteration amount failed"
             );
             emit DealFunded(fundingAmount);
         }
@@ -51,34 +51,24 @@ contract DealPaymentsManager is DealDataRows {
     }
 
     function rewardContractor() internal {
-        if (address(dealMeanOfPayment) == address(0)) {
-            address(uint160(contractor)).transfer(contractorsReward); // TODO dev-note 13
-        } else {
-            require(
-                dealMeanOfPayment.transfer(contractor, contractorsReward),
-                "Contractor reward transfer failed"
-            );
-        }
+        sendRewardTo(contractor, contractorsReward);
     }
 
     function rewardPlatform(uint256 platformFeeAmount) internal {
-        if (address(dealMeanOfPayment) == address(0)) {
-            address(uint160(platform)).transfer(platformFeeAmount);
-        } else {
-            require(
-                dealMeanOfPayment.transfer(platform, platformFeeAmount),
-                "Platform reward transfer failed"
-            );
-        }
+        sendRewardTo(platform, platformFeeAmount);
     }
 
     function rewardReviewer(uint256 reviewerFeeAmount) internal {
+        sendRewardTo(reviewer, reviewerFeeAmount);
+    }
+
+    function sendRewardTo(address payable who, uint256 howMuch) internal {
         if (address(dealMeanOfPayment) == address(0)) {
-            address(uint160(reviewer)).transfer(reviewerFeeAmount);
+            who.transfer(howMuch);
         } else {
             require(
-                dealMeanOfPayment.transfer(reviewer, reviewerFeeAmount),
-                "Reviewer reward transfer failed"
+                dealMeanOfPayment.transfer(who, howMuch),
+                "Reward transfer failed"
             );
         }
     }
