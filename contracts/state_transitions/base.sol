@@ -1,7 +1,8 @@
 pragma solidity 0.5.7;
 
+import '../../node_modules/openzeppelin-solidity/contracts/token/ERC20/IERC20.sol';
+
 import '../interfaces/ITMIterativeDeal.sol';
-import '../../node_modules/openzeppelin-solidity/contracts/token/ERC20/IERC20.sol'; // TODO tmp
 
 contract DealDataRows {
     string taskShortName;
