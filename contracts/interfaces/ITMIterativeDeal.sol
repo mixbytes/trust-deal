@@ -24,9 +24,9 @@ interface ITMIterativeDeal {
      * @param shortName short name
      * @param task task description
      * @param iterationTimeSeconds maximum duration of an iteration (wall clock seconds)
-     * @param paymentToken token used for payments
+     * @param meanOfPayment mean of payment for the deal. If address(0), then ethers are used.
      */
-    function init(string calldata shortName, string calldata task, uint32 iterationTimeSeconds, IERC20 paymentToken)
+    function init(string calldata shortName, string calldata task, uint32 iterationTimeSeconds, IERC20 meanOfPayment)
         external;
 
 
@@ -35,11 +35,11 @@ interface ITMIterativeDeal {
     /**
      * @dev The client proposes participation to a reviewer.
      *
-     * @param dealReviewer proposed reviewer
+     * @param reviewerCandidate proposed reviewer
      * @param feeBPS reviewer fee in basis points
-     * @param reviewTimeoutSeconds timeout for the review phase
+     * @param reviewIntervalSeconds timeout for the review phase
      */
-    function proposeReviewer(address dealReviewer, uint16 feeBPS, uint32 reviewTimeoutSeconds) external;
+    function proposeReviewer(address payable reviewerCandidate, uint16 feeBPS, uint32 reviewIntervalSeconds) external;
 
 
     // PROPOSED_REVIEWER state functions
@@ -64,10 +64,10 @@ interface ITMIterativeDeal {
         string memory shortName,
         string memory task,
         uint32 iterationTimeSeconds,
-        IERC20 paymentToken,
+        IERC20 meanOfPayment,
         address dealReviewer,
         uint16 feeBPS,
-        uint32 reviewTimeoutSeconds
+        uint32 reviewIntervalSeconds
     );
 
     /**
@@ -86,7 +86,7 @@ interface ITMIterativeDeal {
     function cancelRFP() external;
 
     /// @dev The client approves the application made by `contractorForDeal`.
-    function approveApplication(address contractorForDeal) external;
+    function approveApplication(address payable contractorForDeal) external;
 
 
     // WAIT4DEPOSIT state functions

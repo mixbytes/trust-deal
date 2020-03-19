@@ -12,7 +12,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
     )
         external
     {
-        require(currentState == States.RFP, "Call from wrong state");
+        require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
         require(workers.length == rates.length,"Workers and rates arrays should be equal");
         require(workers.length > 0 && workers.length < 100, "Array params have wrong lengths");
         require(bytes(application).length > 0, "Empty application description provided");
@@ -35,17 +35,17 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
 
     function cancelRFP() external onlyClient {
         // TODO raw version, probably will change
-        require(currentState == States.RFP, "Call from wrong state");
+        require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
 
         currentState == States.END;
         emit DealEndedUp(States.RFP);
     }
 
-    function approveApplication(address contractorForDeal) external onlyClient {
-        require(currentState == States.RFP, "Call from wrong state");
-        require(contractorForDeal != address(0), "Invalid address for contractor");
+    function approveApplication(address payable contractorForDeal) external onlyClient {
+        require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
+        require(contractorForDeal != address(0), ERROR_ZERO_ADDRESS);
         require(
-            _hasProvidedApplication(contractorForDeal),
+            hasProvidedApplication(contractorForDeal),
             "Provided contractor hasn't got any applications"
         );
 
@@ -54,7 +54,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         emit ContractorChosen(contractor);
     }
 
-    function _hasProvidedApplication(address checkingContractor) internal view returns (bool) {
+    function hasProvidedApplication(address checkingContractor) internal view returns (bool) {
         Application storage a = applications[checkingContractor];
         if (bytes(a.description).length == 0) {
             return false;
@@ -62,9 +62,9 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         return true;
     }
 
-    // TODO look at dev-note 7th comment
+    // TODO to event
     function getReviewer() external view returns (address) {
-        require(currentState >= States.RFP, "Call from wrong state");
+        require(currentState >= States.RFP, ERROR_WRONG_STATE_CALL);
         return reviewer;
     }
 
@@ -74,20 +74,20 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         string memory shortName,
         string memory task,
         uint32 iterationTimeSeconds,
-        IERC20 paymentToken,
+        IERC20 meanOfPayment,
         address dealReviewer,
         uint16 feeBPS,
-        uint32 reviewTimeoutSeconds
+        uint32 reviewIntervalSeconds
     ) {
-        require(currentState >= States.RFP, "Call from wrong state");
+        require(currentState >= States.RFP, ERROR_WRONG_STATE_CALL);
         state = currentState;
         dealClient = client;
         shortName = taskShortName;
         task = taskDescription;
         iterationTimeSeconds = iterationDuration;
-        paymentToken = dealToken;
+        meanOfPayment = dealMeanOfPayment;
         dealReviewer = reviewer;
         feeBPS = reviewerFeeBPS;
-        reviewTimeoutSeconds = reviewerDecisionDuration;
+        reviewIntervalSeconds = reviewerDecisionDuration;
     }
 }
