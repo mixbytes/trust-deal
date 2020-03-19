@@ -1,17 +1,25 @@
 pragma solidity 0.5.7;
 
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import '../../node_modules/openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol';
 
 import './base.sol';
 import './dealAssetPayer.sol';
 import '../utils/Uint256Caster.sol';
 
-contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsManager {
+contract DealWait4DepositStateLogic is BaseDealStateTransitioner,
+    DealPaymentsManager,
+    ReentrancyGuard
+{
     using Uint256Caster for uint256;
     using SafeMath for uint32;
     using SafeMath for uint256;
 
-    function finishDeal() external onlyClient {
+    /**
+     * @notice Actually, it could be considered safe against re-entrancy,
+     * because function transfers rest of balance.
+     */
+    function finishDeal() external onlyClient nonReentrant {
         require(currentState == States.WAIT4DEPOSIT, ERROR_WRONG_STATE_CALL);
 
         payRestToClient();
@@ -23,7 +31,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsMa
     function newIteration(uint256 fundingAmount) external payable onlyClient {
         require(currentState == States.WAIT4DEPOSIT, ERROR_WRONG_STATE_CALL);
 
-        fundIteration(fundingAmount);
+        checkFundedAmount(fundingAmount);
 
         dealBudget = dealBudget.add(fundingAmount);
         iterationStart = now.toUint32();

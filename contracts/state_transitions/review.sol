@@ -7,14 +7,17 @@ import './base.sol';
 import './dealAssetPayer.sol';
 import '../utils/Uint256Caster.sol';
 
-contract DealReviewStateLogic is BaseDealStateTransitioner, DealPaymentsManager, ReentrancyGuard {
+contract DealReviewStateLogic is BaseDealStateTransitioner,
+    DealPaymentsManager,
+    ReentrancyGuard
+{
     using Uint256Caster for uint256;
     using SafeMath for uint32;
     using SafeMath for uint256;
 
     event DealTaskReviewedPositively(uint32 when);
 
-    function reviewOk() nonReentrant external {
+    function reviewOk() external nonReentrant {
         require(currentState == States.REVIEW, ERROR_WRONG_STATE_CALL);
         uint32 reviewDeadline = uint32(
             reviewerDecisionTimeIntervalStart.add(reviewerDecisionDuration)

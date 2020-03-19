@@ -224,11 +224,11 @@ contract('Deal. Base Test', async accounts => {
 
         // invalid value of param
         await expectThrow(
-            dealContract.newApplication("", [worker1, "0x0000000000000000000000000000000000000000"], [1,2], {from: contractor})
+            dealContract.newApplication("123", [worker1, "0x0000000000000000000000000000000000000000"], [1,2], {from: contractor})
         )
         
         await expectThrow(
-            dealContract.newApplication("", [worker1, worker2], [0, 3], {from: contractor})
+            dealContract.newApplication("123", [worker1, worker2], [0, 3], {from: contractor})
         )
         
     })

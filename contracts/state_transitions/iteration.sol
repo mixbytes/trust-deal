@@ -21,7 +21,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(isEmployee(msg.sender), "Call from logger, who is not contractors employee");
         require(iterationStart.add(iterationDuration) > now, "Time for logging is out");
         require(bytes(info).length > 0, "Info string is empty");
-        require(isNotLoggedOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
+        require(isNotLoggingOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
         minutesDelivered = uint32(workMinutes.add(minutesDelivered)); // TODO to event
         contractorsReward = getNewlyCountedTotalCost(msg.sender, workMinutes);
@@ -50,7 +50,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         return e[logger];
     }
 
-    function isNotLoggedOverBudget(address logger, uint32 workMinutes)
+    function isNotLoggingOverBudget(address logger, uint32 workMinutes)
         internal
         view
         returns (bool)

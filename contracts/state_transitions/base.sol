@@ -8,10 +8,10 @@ contract DealDataRows {
     string taskShortName;
     string taskDescription;
 
-    address payable client;
-    address payable contractor;
-    address payable reviewer;
-    address payable platform;
+    address client;
+    address contractor;
+    address reviewer;
+    address platform;
 
     IERC20 public dealMeanOfPayment;
 
@@ -26,11 +26,9 @@ contract DealDataRows {
     uint32 reviewerDecisionTimeIntervalStart; // timestamp
 
     uint32 minutesDelivered; // TODO to events
-    uint32 iterationNumber;
 
     uint256 dealBudget;
     uint256 contractorsReward;
-    mapping (uint32 => uint256) contractorsRewardOnIteration;
 
     struct Application {
         string description;
