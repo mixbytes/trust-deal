@@ -19,8 +19,7 @@ contract DealInitStateLogic is BaseDealStateTransitioner {
         );
         require(reviewerCandidate != address(0), ERROR_ZERO_ADDRESS);
         require(feeBPS > 0 && feeBPS < 10000, "Fee BPS could be only in range (0, 10000)");
-        // TODO 1 minute?
-        require(reviewIntervalSeconds > 60, "Reviewer decision duration should be gt 60 sec");
+        require(reviewIntervalSeconds > 60, "Reviewer decision duration should be gt 1 min");
 
         reviewer = reviewerCandidate;
         reviewerFeeBPS = feeBPS;

@@ -6,30 +6,28 @@ contract DealPaymentsManager is DealDataRows {
     event TransferedRestOfFunds(uint256 funds);
     event DealFunded(uint256 fundingAmount);
 
+    string private constant ERROR_CLIENT_FUNDS_TRANSFER = "Transfering user ethers on deal finished failed";
+    string private constant ERROR_LITTLE_FUNDING_AMOUNT = "Funding amount must be gt 10000";
+    string private constant ERROR_REWARD_TRANSFER_FAILED = "Reward transfer failed";
+
     function payRestToClient() internal {
+        uint256 transferingAmount;
         if (address(dealMeanOfPayment) == address(0)) {
-            uint256 restFunds = address(this).balance;
-            client.transfer(restFunds);
-            emit TransferedRestOfFunds(restFunds);
+            transferingAmount = address(this).balance;
         } else {
-            // will revert if `balanceOf` fails
-            uint256 balanceOfDeal = dealMeanOfPayment.balanceOf(address(this));
-            // TODO TEST if balanceOfDeal == 0
-            require(
-                dealMeanOfPayment.transfer(client, balanceOfDeal),
-                "Transfering client tokens on deal finish failed"
-            );
-            emit TransferedRestOfFunds(balanceOfDeal);
+            transferingAmount = dealMeanOfPayment.balanceOf(address(this));
         }
+        sendAssetsTo(client, transferingAmount, ERROR_CLIENT_FUNDS_TRANSFER);
+        emit TransferedRestOfFunds(transferingAmount);
     }
 
-    function fundIteration(uint256 fundingAmount) internal {
+    function checkFundedAmount(uint256 fundingAmount) internal {
         // Called only by client, that's why `msg.sender` used instead of `client`.
         if (address(dealMeanOfPayment) == address(0)) {
-            require(msg.value > 10000 wei, "Funding amount is very little");
+            require(msg.value > 10000 wei, ERROR_LITTLE_FUNDING_AMOUNT);
             emit DealFunded(msg.value);
         } else {
-            require(fundingAmount > 10000, "Funding amount is very little");
+            require(fundingAmount > 10000, ERROR_LITTLE_FUNDING_AMOUNT);
             require(
                 dealMeanOfPayment.transferFrom(client, address(this), fundingAmount),
                 "Locking funding iteration amount failed"
@@ -51,24 +49,25 @@ contract DealPaymentsManager is DealDataRows {
     }
 
     function rewardContractor() internal {
-        sendRewardTo(contractor, contractorsReward);
+        sendAssetsTo(contractor, contractorsReward, ERROR_REWARD_TRANSFER_FAILED);
     }
 
     function rewardPlatform(uint256 platformFeeAmount) internal {
-        sendRewardTo(platform, platformFeeAmount);
+        sendAssetsTo(platform, platformFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
     function rewardReviewer(uint256 reviewerFeeAmount) internal {
-        sendRewardTo(reviewer, reviewerFeeAmount);
+        sendAssetsTo(reviewer, reviewerFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function sendRewardTo(address payable who, uint256 howMuch) internal {
+    function sendAssetsTo(address payable who, uint256 howMuch, string memory errorMsg) internal {
         if (address(dealMeanOfPayment) == address(0)) {
-            who.transfer(howMuch);
+            bool success = who.send(howMuch);
+            require(success, errorMsg);
         } else {
             require(
                 dealMeanOfPayment.transfer(who, howMuch),
-                "Reward transfer failed"
+                errorMsg
             );
         }
     }

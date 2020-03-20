@@ -26,11 +26,9 @@ contract DealDataRows {
     uint32 reviewerDecisionTimeIntervalStart; // timestamp
 
     uint32 minutesDelivered; // TODO to events
-    uint32 iterationNumber;
 
     uint256 dealBudget;
     uint256 contractorsReward;
-    mapping (uint32 => uint256) contractorsRewardOnIteration;
 
     struct Application {
         string description;
