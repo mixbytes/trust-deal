@@ -14,12 +14,26 @@ contract('Deal. Base Test', async accounts => {
 
     const client = accounts[0];
     const contractor = accounts[1];
-    const reviewer1 = accounts[2];
+    const reviewerMain = accounts[2];
     const reviewer2 = accounts[3];
     const worker1 = accounts[4];
     const worker2 = accounts[5];
     const contractor2 = accounts[6];
     const platform = accounts[7];
+
+    const reviewerFeeBPS = 5; // 5.div(10000)
+    const platformFeeBPS = 5;
+    let contractorReward;
+
+    const iterationDuration = 60 * 60 * 24 * 14; // 14 days
+    let iterationStart;
+    let iterationNumber;
+
+    const reviewerDecisionDuration = 60 * 60 * 24 * 5; // 5 days
+    let reviewerDecisionTimeIntervalStart;
+
+    let dealBudget;
+    let currentState;
 
     let dealContract;
     let dealTokenContract;
@@ -77,13 +91,12 @@ contract('Deal. Base Test', async accounts => {
     });
 
     it("should fail INIT", async() => {
-        let iterationTimeout = 60 * 60 * 24 * 14;
         let taskMock = "some string";
         let shortName = "lal";
 
         // wrong access
         await expectThrow(
-            dealContract.init(shortName, taskMock, iterationTimeout, dealTokenContract.address, {from: contractor})
+            dealContract.init(shortName, taskMock, iterationDuration, dealTokenContract.address, {from: contractor})
         )
 
         // wrong param for iteration duration
@@ -93,20 +106,19 @@ contract('Deal. Base Test', async accounts => {
 
         // wrong task name and descr length
         await expectThrow(
-            dealContract.init("", taskMock, iterationTimeout, dealTokenContract.address, {from: client})
+            dealContract.init("", taskMock, iterationDuration, dealTokenContract.address, {from: client})
         )
         await expectThrow(
-            dealContract.init(shortName, "", iterationTimeout, dealTokenContract.address, {from: client})
+            dealContract.init(shortName, "", iterationDuration, dealTokenContract.address, {from: client})
         )
     })
 
     // TODO add test with ether as deal currency
     it("should move state to INIT", async() => {
-        let iterationTimeout = 60 * 60 * 24 * 14; // 14 days
         let taskMock = "some string";
         let shortName = "lal";
 
-        await dealContract.init(shortName, taskMock, iterationTimeout, dealTokenContract.address, {from: client})
+        await dealContract.init(shortName, taskMock, iterationDuration, dealTokenContract.address, {from: client})
 
         currentState = await dealContract.getState({from: client});
         assert.equal(currentState, States.INIT)
@@ -114,64 +126,63 @@ contract('Deal. Base Test', async accounts => {
 
     it('should fail init second time', async() => {
         await expectThrow(
-            dealContract.init("12", "212", 12121212, dealTokenContract.address, {from: client})
+            dealContract.init("12", "212", iterationDuration, dealTokenContract.address, {from: client})
         )
     })
-
+    
     it("should fail transition to PROPOSED_REVIEWER", async() => {
         //wrong access
         await expectThrow(
-            dealContract.proposeReviewer(reviewer1, 5, 1000, {from: contractor})
+            dealContract.proposeReviewer(reviewerMain, 5, 1000, {from: contractor})
         )
         // wrong fee
         await expectThrow(
-            dealContract.proposeReviewer(reviewer1, 0, 1000, {from: client})
+            dealContract.proposeReviewer(reviewerMain, 0, 1000, {from: client})
         )
         await expectThrow(
-            dealContract.proposeReviewer(reviewer1, 0, 200000, {from: client})
+            dealContract.proposeReviewer(reviewerMain, 10000, 200000, {from: client})
         )
         // wrong decision duration
         await expectThrow(
-            dealContract.proposeReviewer(reviewer1, 5, 0, {from: client})
+            dealContract.proposeReviewer(reviewerMain, 5, 0, {from: client})
         )
     })
 
-    it("should change state to PROPOSED_REVIEWER proposing reviewer1", async() => {
-        reviewerFee = 5 // 0.05%
-        reviwerDecisionDuration = 60 * 60 * 24 * 3 // 3 days
-        await dealContract.proposeReviewer(reviewer1, reviewerFee, reviwerDecisionDuration, {from: client});
+    it("should change state to PROPOSED_REVIEWER proposing reviewer2", async() => {
+        let tx = await dealContract.proposeReviewer(reviewer2, 2, reviewerDecisionDuration, {from: client});
+        let emittedEventArgs = tx.logs[0].args
+
+        assert.equal(emittedEventArgs.reviewer, reviewer2)
+        assert.equal(emittedEventArgs.reviewerFeeBPS, 2)
+        assert.equal(emittedEventArgs.decisionDuration, reviewerDecisionDuration)
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)
     })
 
-    it("should reset reviewer params", async() => {
-        reviewerFee = 5 // 0.05%
-        reviwerDecisionDuration = 60 * 60 * 24 * 5 // 5 days
-        await dealContract.proposeReviewer(reviewer1, reviewerFee, reviwerDecisionDuration, {from: client});
+    it("should reset reviewer2 params", async() => {
+        await dealContract.proposeReviewer(reviewer2, reviewerFeeBPS, reviewerDecisionDuration, {from: client});
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)        
     })
 
-    it("should fail decline reviewer coniditions", async() => {
+    it("should fail decline reviewer2 coniditions", async() => {
         // wrong access
         await expectThrow(
             dealContract.reviewerJoins(false, {from: contractor})
         )
     })
 
-    it("should decline reviewer conditions", async() => {
-        tx = await dealContract.reviewerJoins(false, {from: reviewer1})
+    it("should decline reviewer2 conditions", async() => {
+        await dealContract.reviewerJoins(false, {from: reviewer2})
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.INIT)
     })
 
-    it("should change state to PROPOSED_REVIEWER proposing reviewer2", async() => {
-        reviewerFee = 5 // 0.05%
-        reviwerDecisionDuration = 60 * 60 * 24 * 3 // 5 days
-        await dealContract.proposeReviewer(reviewer2, reviewerFee, reviwerDecisionDuration, {from: client});
+    it("should change state to PROPOSED_REVIEWER proposing reviewerMain", async() => {
+        await dealContract.proposeReviewer(reviewerMain, reviewerFeeBPS, reviewerDecisionDuration, {from: client});
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)
@@ -180,20 +191,20 @@ contract('Deal. Base Test', async accounts => {
     it("should fail acception of reviewer conditions", async() => {
         //wrong access
         await expectThrow(
-            dealContract.reviewerJoins(true, {from: reviewer1})
+            dealContract.reviewerJoins(true, {from: reviewer2})
         )
     })
 
-    it("should accept reviewer conditions by reviewer2 and move state to RFP", async() => {
-        tx = await dealContract.reviewerJoins(true, {from: reviewer2})
+    it("should accept reviewer conditions", async() => {
+        tx = await dealContract.reviewerJoins(true, {from: reviewerMain})
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.RFP)
 
         statedReviewer = tx.logs[0].args.reviewer;
-        assert.equal(statedReviewer, reviewer2)
+        assert.equal(statedReviewer, reviewerMain)
     })
-
+/*
     it("should fail review decline by reviewer2", async() => {
         // wrong state
         await expectThrow(
@@ -260,7 +271,7 @@ contract('Deal. Base Test', async accounts => {
 
         // contractor hasn't got applications
         await expectThrow(
-            dealContract.approveApplication(reviewer1, {from: client})
+            dealContract.approveApplication(reviewerMain, {from: client})
         )
     })
 
@@ -452,4 +463,5 @@ contract('Deal. Base Test', async accounts => {
         let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewer2)
         assert.equal(tokenBalanceOfReviewer, 50 + reviewerReward)       
     })
+*/
 })
