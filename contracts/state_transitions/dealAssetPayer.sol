@@ -2,10 +2,6 @@ pragma solidity 0.5.7;
 
 import './base.sol';
 
-/**
- * @notice Using `call.value()` over `transfer` because of this:
- * https://diligence.consensys.net/blog/2019/09/stop-using-soliditys-transfer-now/
- */
 contract DealPaymentsManager is DealDataRows {
     event TransferedRestOfFunds(uint256 funds);
     event DealFunded(uint256 fundingAmount);
@@ -19,10 +15,10 @@ contract DealPaymentsManager is DealDataRows {
         if (address(dealMeanOfPayment) == address(0)) {
             transferingAmount = address(this).balance;
         } else {
-            // will revert if `balanceOf` fails
             transferingAmount = dealMeanOfPayment.balanceOf(address(this));
         }
         sendAssetsTo(client, transferingAmount, ERROR_CLIENT_FUNDS_TRANSFER);
+        emit TransferedRestOfFunds(transferingAmount);
     }
 
     function checkFundedAmount(uint256 fundingAmount) internal {
@@ -64,9 +60,9 @@ contract DealPaymentsManager is DealDataRows {
         sendAssetsTo(reviewer, reviewerFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function sendAssetsTo(address who, uint256 howMuch, string memory errorMsg) internal {
+    function sendAssetsTo(address payable who, uint256 howMuch, string memory errorMsg) internal {
         if (address(dealMeanOfPayment) == address(0)) {
-            (bool success, ) = who.call.value(howMuch)("");
+            bool success = who.send(howMuch);
             require(success, errorMsg);
         } else {
             require(
