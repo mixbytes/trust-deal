@@ -17,6 +17,7 @@ contract DealDataRows {
 
     uint16 reviewerFeeBPS; // instead of reviewerReward
     uint16 platformFeeBPS; // instead of platformReward
+    uint256 contractorsReward;
 
     uint32 iterationDuration;
     uint32 iterationStart; // timestamp
@@ -26,10 +27,9 @@ contract DealDataRows {
     uint32 reviewerDecisionDuration;
     uint32 reviewerDecisionTimeIntervalStart; // timestamp
 
-    mapping (uint32 => uint32) minutesDeliveredOnIteration; // TODO to events
-
     uint256 dealBudget;
-    uint256 contractorsReward;
+    mapping (uint32 => uint32) minutesDeliveredOnIteration;
+    mapping (uint32 => uint256) budgetSpentOnIteration;
 
     struct Application {
         string description;

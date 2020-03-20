@@ -58,7 +58,12 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         uint32 totalMinutesLogged,
         uint256 totalSpentBudget
     ) {
-        return (0,0);
+        // Not sure if is right requirement
+        require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
+        for (uint32 i = 1; i <= iterationNumber; i++) {
+            totalMinutesLogged = uint32(totalMinutesLogged.add(minutesDeliveredOnIteration[i]));
+            totalSpentBudget = totalSpentBudget.add(budgetSpentOnIteration[i]);
+        }
     }
 
     function isEmployee(address logger) internal view returns (bool) {

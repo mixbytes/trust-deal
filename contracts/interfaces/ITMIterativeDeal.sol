@@ -40,6 +40,7 @@ interface ITMIterativeDeal {
      * @param reviewIntervalSeconds timeout for the review phase
      */
     function proposeReviewer(address payable reviewerCandidate, uint16 feeBPS, uint32 reviewIntervalSeconds) external;
+    function cancelINIT() external;
 
 
     // PROPOSED_REVIEWER state functions

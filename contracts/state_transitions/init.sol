@@ -28,4 +28,11 @@ contract DealInitStateLogic is BaseDealStateTransitioner {
         currentState = States.PROPOSED_REVIEWER;
         emit ReviewerProposed(reviewer, reviewerFeeBPS, reviewerDecisionDuration);
     }
+
+    function cancelINIT() external onlyClient {
+        require(currentState == States.INIT, ERROR_WRONG_STATE_CALL);
+
+        currentState = States.END;
+        emit DealEndedUp(States.INIT);
+    }
 }
