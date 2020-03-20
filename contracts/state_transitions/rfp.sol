@@ -34,7 +34,6 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
     }
 
     function cancelRFP() external onlyClient {
-        // TODO raw version, probably will change
         require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
 
         currentState == States.END;
@@ -62,7 +61,6 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         return true;
     }
 
-    // TODO to event
     function getReviewer() external view returns (address) {
         require(currentState >= States.RFP, ERROR_WRONG_STATE_CALL);
         return reviewer;

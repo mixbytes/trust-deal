@@ -10,15 +10,17 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     using SafeMath for uint32;
     using SafeMath for uint256;
 
-    // TODO view functions to events
-
     event IterationFinished(uint32 when);
 
     function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external {
         require(currentState == States.ITERATION, ERROR_WRONG_STATE_CALL);
         require(isEmployee(msg.sender), "Call from logger, who is not contractors employee");
-        require(logTimestamp > iterationStart, "Log timestamp should be gt iteration start"); // TODO logTimestamp < iterationStart.add(iterationDuration)
-        require(iterationStart.add(iterationDuration) > now, "Time for logging is out");
+        uint32 iterationTimeout = uint32(iterationStart.add(iterationDuration));
+        require(
+            logTimestamp >= iterationStart && logTimestamp < iterationTimeout,
+            "Log timestamp should be gt iteration start"
+        );
+        require(iterationTimeout > now, "Time for logging is out");
         require(bytes(info).length > 0, "Info string is empty");
         require(isNotLoggingOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
@@ -53,7 +55,6 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         spentBudget = contractorsReward.add(feesAmount());
     }
 
-    // TODO to be done
     function getTotalStat() external view returns (
         uint32 totalMinutesLogged,
         uint256 totalSpentBudget

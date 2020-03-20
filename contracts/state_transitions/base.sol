@@ -23,7 +23,6 @@ contract DealDataRows {
     uint32 iterationStart; // timestamp
     uint32 iterationNumber;
 
-    // TODO issue 1;
     uint32 reviewerDecisionDuration;
     uint32 reviewerDecisionTimeIntervalStart; // timestamp
 
@@ -63,12 +62,10 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         IERC20 meanOfPayment
     );
 
-    // TODO to events
     function getState() external view returns (States) {
         return currentState;
     }
 
-    // TODO to events
     function getClient() external view returns (address) {
         return client;
     }
