@@ -31,6 +31,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsMa
 
         dealBudget = dealBudget.add(fundingAmount);
         iterationStart = now.toUint32();
+        iterationNumber = uint32(iterationNumber.add(1));
         currentState = States.ITERATION;
     }
 }

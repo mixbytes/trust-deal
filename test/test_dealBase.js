@@ -309,11 +309,11 @@ contract('Deal. Base Test', async accounts => {
     it("should fail work logging", async() => {
         // invalid access
         await expectThrow(
-            dealContract.logWork(10000000, 10, "mock", {from: contractor})
+            dealContract.logWork(2**32-1, 10, "mock", {from: contractor})
         )
         // empty info param
         await expectThrow(
-            dealContract.logWork(10000000, 10, "", {from: worker1})
+            dealContract.logWork(2**32-1, 10, "", {from: worker1})
         )
 
         // timeout is met
@@ -327,7 +327,7 @@ contract('Deal. Base Test', async accounts => {
 
         // iteration timeout is met
         await expectThrow(
-            dealContract.logWork(10000000, 100, "mock", {from: worker1})
+            dealContract.logWork(2**32-1, 100, "mock", {from: worker1})
         )
 
         await revertToSnapShot(snapshotId)
@@ -336,15 +336,19 @@ contract('Deal. Base Test', async accounts => {
         // budgetWithoutFees = 99950, worker1Rate = 1000 => maxMin = 99950 * 60 / 1000 = 5997
         // TODO budgetWithoutFees does not containt platform fee
         await expectThrow(
-            dealContract.logWork(10000000, 5997, "mock", {from: worker1})
+            dealContract.logWork(2**32-1, 5997, "mock", {from: worker1})
         )
-        
+
+        // little timestamp
+        await expectThrow(
+            dealContract.logWork(100000, 60, "mock", {from: worker1})
+        )
     })
 
     // TODO dev-note comment 12
     it("should log work", async() => {
-        await dealContract.logWork(10000000, 60, "60 mins", {from: worker1});
-        await dealContract.logWork(10000000, 60, "60 mins", {from: worker2});
+        await dealContract.logWork(2**32-1, 60, "60 mins", {from: worker1});
+        await dealContract.logWork(2**32-1, 60, "60 mins", {from: worker2});
     })
 
     // TODO test finish iteration with timeout
@@ -361,7 +365,7 @@ contract('Deal. Base Test', async accounts => {
 
     it("should fail work logging due to call from wrong state", async() => {
         await expectThrow(
-            dealContract.logWork(10000000, 60, "60 mins", {from: worker1})
+            dealContract.logWork(2**32-1, 60, "60 mins", {from: worker1})
         )
     })
 
@@ -413,7 +417,7 @@ contract('Deal. Base Test', async accounts => {
     })
 
     it("should log work", async() => {
-        await dealContract.logWork(100000000, 120, "info", {from: worker1})
+        await dealContract.logWork(2**32-1, 120, "info", {from: worker1})
         // cost 2 * 1000 = 2000
     })
 

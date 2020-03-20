@@ -65,10 +65,7 @@ contract DealPaymentsManager is DealDataRows {
             bool success = who.send(howMuch);
             require(success, errorMsg);
         } else {
-            require(
-                dealMeanOfPayment.transfer(who, howMuch),
-                errorMsg
-            );
+            require(dealMeanOfPayment.transfer(who, howMuch), errorMsg);
         }
     }
 }

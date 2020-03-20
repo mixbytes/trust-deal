@@ -12,20 +12,19 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
 
     // TODO view functions to events
 
-    event LoggedWork(address employee, uint32 logTimestamp, uint32 workMinutes, string info);
     event IterationFinished(uint32 when);
 
     function logWork(uint32 logTimestamp, uint32 workMinutes, string calldata info) external {
-        // TODO requirements for logTimestamp?
         require(currentState == States.ITERATION, ERROR_WRONG_STATE_CALL);
         require(isEmployee(msg.sender), "Call from logger, who is not contractors employee");
+        require(logTimestamp > iterationStart, "Log timestamp should be gt iteration start"); // TODO logTimestamp < iterationStart.add(iterationDuration)
         require(iterationStart.add(iterationDuration) > now, "Time for logging is out");
         require(bytes(info).length > 0, "Info string is empty");
         require(isNotLoggingOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
-        minutesDelivered = uint32(workMinutes.add(minutesDelivered)); // TODO to event
+        addMinutesToIteration(workMinutes);
         contractorsReward = getNewlyCountedTotalCost(msg.sender, workMinutes);
-        emit LoggedWork(msg.sender, logTimestamp, workMinutes, info);
+        emit LoggedWork(iterationNumber, logTimestamp, workMinutes, info);
     }
 
     function finishIteration() external {
@@ -39,6 +38,27 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         reviewerDecisionTimeIntervalStart = now.toUint32();
         currentState = States.REVIEW;
         emit IterationFinished(now.toUint32());
+    }
+
+    function getIterationStat() external view returns (
+        uint32 currentNumber,
+        uint32 minutesLogged,
+        uint256 remainingBudget,
+        uint256 spentBudget
+    ) {
+        require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
+        currentNumber = iterationNumber;
+        minutesLogged = minutesDeliveredOnIteration[iterationNumber];
+        remainingBudget = dealBudget.sub(contractorsReward).sub(feesAmount());
+        spentBudget = contractorsReward.add(feesAmount());
+    }
+
+    // TODO to be done
+    function getTotalStat() external view returns (
+        uint32 totalMinutesLogged,
+        uint256 totalSpentBudget
+    ) {
+        return (0,0);
     }
 
     function isEmployee(address logger) internal view returns (bool) {
@@ -58,14 +78,16 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         uint256 budgetWithoutFees = getBudgetWithoutFees();
         uint256 newlyCountedTotalCost = getNewlyCountedTotalCost(logger, workMinutes);
         return budgetWithoutFees > newlyCountedTotalCost;
-
     }
 
     function getBudgetWithoutFees() internal view returns (uint256) {
+        return dealBudget.sub(feesAmount());
+    }
+
+    function feesAmount() internal view returns (uint256) {
         uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
         uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
-
-        return dealBudget.sub(reviewerFeeAmount).sub(platformFeeAmount);
+        return reviewerFeeAmount.add(platformFeeAmount);
     }
 
     function getNewlyCountedTotalCost(address logger, uint32 workMinutes)
@@ -76,5 +98,11 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         uint256 loggerRate = getLoggerRate(logger);
         uint256 loggerCosts = workMinutes.mul(loggerRate).div(60);
         return contractorsReward.add(loggerCosts);
+    }
+
+    function addMinutesToIteration(uint32 minutesToAdd) internal {
+        // alias
+        mapping (uint32 => uint32) storage mDI = minutesDeliveredOnIteration;
+        mDI[iterationNumber] = uint32(mDI[iterationNumber].add(minutesToAdd));
     }
 }

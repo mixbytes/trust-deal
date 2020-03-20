@@ -15,17 +15,18 @@ contract DealDataRows {
 
     IERC20 public dealMeanOfPayment;
 
-    uint16 reviewerFeeBPS;
-    uint16 platformFeeBPS;
+    uint16 reviewerFeeBPS; // instead of reviewerReward
+    uint16 platformFeeBPS; // instead of platformReward
 
     uint32 iterationDuration;
     uint32 iterationStart; // timestamp
+    uint32 iterationNumber;
 
     // TODO issue 1;
     uint32 reviewerDecisionDuration;
     uint32 reviewerDecisionTimeIntervalStart; // timestamp
 
-    uint32 minutesDelivered; // TODO to events
+    mapping (uint32 => uint32) minutesDeliveredOnIteration; // TODO to events
 
     uint256 dealBudget;
     uint256 contractorsReward;

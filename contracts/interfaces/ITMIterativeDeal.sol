@@ -113,16 +113,16 @@ interface ITMIterativeDeal {
 
     /// @dev Stat of the current iteration.
     function getIterationStat() external view returns (
-        uint currentNumber,
-        uint minutesLogged,
-        uint remainingBudget,
-        uint spentBudget
+        uint32 currentNumber,
+        uint32 minutesLogged,
+        uint256 remainingBudget,
+        uint256 spentBudget
     );
 
     /// @dev Lifetime stat of the deal.
     function getTotalStat() external view returns (
-        uint minutesLogged,
-        uint spentBudget
+        uint32 totalMinutesLogged,
+        uint256 totalSpentBudget
     );
 
     /// @dev Signals to finish the current iteration and start a review.
