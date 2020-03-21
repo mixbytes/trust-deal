@@ -9,6 +9,9 @@ contract('Deal. Base Test', async accounts => {
         PROPOSED_REVIWER: 2,
         RFP: 3,
         DEPOSIT_WAIT: 4,
+        ITERATON: 5,
+        REVIEW: 6,
+        END: 7
     }
     const zeroAddress = "0x0000000000000000000000000000000000000000";
 

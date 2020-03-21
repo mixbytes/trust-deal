@@ -3,12 +3,15 @@ const { time } = require('openzeppelin-test-helpers');
 const Deal = artifacts.require("TMIterativeDeal");
 const DealToken = artifacts.require("DealToken");
 
-contract('Deal. Base Test', async accounts => {
+contract('Deal. Finish at W4D state', async accounts => {
     const States = {
         INIT: 1,
         PROPOSED_REVIWER: 2,
         RFP: 3,
         DEPOSIT_WAIT: 4,
+        ITERATON: 5,
+        REVIEW: 6,
+        END: 7
     }
     const zeroAddress = "0x0000000000000000000000000000000000000000";
 
@@ -27,7 +30,6 @@ contract('Deal. Base Test', async accounts => {
 
     const reviewerDecisionDuration = 60 * 60 * 24 * 5; // 5 days
 
-    let dealBudget;
     let currentState;
 
     let dealContract;
@@ -275,5 +277,14 @@ contract('Deal. Base Test', async accounts => {
         await expectThrow(
             dealContract.finishDeal({from: contractor})
         )
+    })
+
+    it("should finish deal", async() => {
+        let tx = await dealContract.finishDeal({from: client})
+        let finishedAt = tx.logs[1].args.when;
+        assert.equal(finishedAt, States.DEPOSIT_WAIT)
+
+        currentState = await dealContract.getState()
+        assert.equal(currentState, States.END);
     })
 })
