@@ -24,7 +24,7 @@ contract('Deal. Base Test', async accounts => {
     const contractor2 = accounts[6];
     const platform = accounts[7];
 
-    const reviewerFeeBPS = 5; // 5.div(10000)
+    const reviewerFeeBPS = 5; // 5.div(100)
     const platformFeeBPS = 5;
     let contractorReward;
 
@@ -336,6 +336,7 @@ contract('Deal. Base Test', async accounts => {
 
         currentState = await dealContract.getState()
         assert.equal(currentState, States.ITERATON)
+        iterationNumber = 1;
     })
 
     it("should fail funding new iteration", async() => {
@@ -396,14 +397,39 @@ contract('Deal. Base Test', async accounts => {
             dealContract.logWork(block.timestamp, 5995, "mock", {from: worker1})
         )
     })
-/*
-    // TODO dev-note comment 12
-    it("should log work", async() => {
-        await dealContract.logWork(2**32-1, 60, "60 mins", {from: worker1});
-        await dealContract.logWork(2**32-1, 60, "60 mins", {from: worker2});
+
+    it("checking iteration vars", async() => {
+        let iterStat = await dealContract.getIterationStat()
+        let totalStat = await dealContract.getTotalStat()
+
+        assert.equal(iterStat.currentNumber, iterationNumber)
+        assert.equal(iterStat.minutesLogged, 0)
+        assert.equal(iterStat.remainingBudget, 100000 - 50 - 50) // 50 = feeBPS/100 * dealBudget
+        assert.equal(iterStat.spentBudget, 100)
+
+        assert.equal(totalStat.totalMinutesLogged, 0)
+        assert.equal(totalStat.totalSpentBudget, 100)
     })
 
-    // TODO test finish iteration with timeout
+    it("should log work", async() => {
+        let blocknumber = await web3.eth.getBlockNumber();
+        let block = await web3.eth.getBlock(blocknumber);
+
+        await dealContract.logWork(block.timestamp, 60, "60 mins", {from: worker1});
+        await dealContract.logWork(block.timestamp, 60, "60 mins", {from: worker2});
+
+        let iterStat = await dealContract.getIterationStat()
+        let totalStat = await dealContract.getTotalStat()
+
+        assert.equal(iterStat.currentNumber, iterationNumber)
+        assert.equal(iterStat.minutesLogged, 120)
+        assert.equal(iterStat.remainingBudget, 100000 - 50 - 50 - 1000 - 1000) // 50 = feeBPS/100 * dealBudget
+        assert.equal(iterStat.spentBudget, 50 + 50 + 1000 + 1000)
+
+        assert.equal(totalStat.totalMinutesLogged, 120)
+        assert.equal(totalStat.totalSpentBudget, 50 + 50 + 1000 + 1000)
+    })
+
     it("should fail finish iteration", async() => {
         // invalid access
         await expectThrow(
@@ -412,12 +438,21 @@ contract('Deal. Base Test', async accounts => {
     })
 
     it("should finish iteration", async() => {
-        await dealContract.finishIteration({from: contractor})
+        let blocknumber = await web3.eth.getBlockNumber();
+        let block = await web3.eth.getBlock(blocknumber);
+        let tx = await dealContract.finishIteration({from: contractor})
+        let reviewerStartTimestamp = tx.logs[0].args.when;
+
+        currentState = await dealContract.getState();
+        assert.equal(currentState, States.REVIEW);
+        assert.equal(reviewerStartTimestamp, block.timestamp)
     })
 
     it("should fail work logging due to call from wrong state", async() => {
+        let blocknumber = await web3.eth.getBlockNumber();
+        let block = await web3.eth.getBlock(blocknumber);
         await expectThrow(
-            dealContract.logWork(2**32-1, 60, "60 mins", {from: worker1})
+            dealContract.logWork(block.timestamp, 60, "60 mins", {from: worker1})
         )
     })
 
@@ -429,7 +464,7 @@ contract('Deal. Base Test', async accounts => {
 
         // TODO test review with timeout
     })
-
+/*
     it("should review ok", async() => {
         let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
         assert.equal(dealBudget, 100000)

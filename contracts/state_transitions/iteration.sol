@@ -24,8 +24,14 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(bytes(info).length > 0, "Info string is empty");
         require(isNotLoggingOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
-        addMinutesToIteration(workMinutes);
-        contractorsReward = getNewlyCountedTotalCost(msg.sender, workMinutes);
+        // alias
+        mapping (uint32 => uint32) storage mDI = minutesDeliveredOnIteration;
+        mDI[iterationNumber] = uint32(mDI[iterationNumber].add(workMinutes));
+
+        budgetSpentOnIteration[iterationNumber] = getNewlyCountedTotalCost(
+            msg.sender,
+            workMinutes
+        );
         emit LoggedWork(iterationNumber, logTimestamp, workMinutes, info);
     }
 
@@ -51,8 +57,11 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
         currentNumber = iterationNumber;
         minutesLogged = minutesDeliveredOnIteration[iterationNumber];
-        remainingBudget = dealBudget.sub(contractorsReward).sub(feesAmount());
-        spentBudget = contractorsReward.add(feesAmount());
+
+        //alias
+        mapping (uint32 => uint256) storage bSOI = budgetSpentOnIteration;
+        remainingBudget = dealBudget.sub(bSOI[iterationNumber]).sub(feesAmount());
+        spentBudget = bSOI[iterationNumber].add(feesAmount());
     }
 
     function getTotalStat() external view returns (
@@ -63,7 +72,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
         for (uint32 i = 1; i <= iterationNumber; i++) {
             totalMinutesLogged = uint32(totalMinutesLogged.add(minutesDeliveredOnIteration[i]));
-            totalSpentBudget = totalSpentBudget.add(budgetSpentOnIteration[i]);
+            totalSpentBudget = totalSpentBudget.add(budgetSpentOnIteration[i].add(feesAmount()));
         }
     }
 
@@ -91,6 +100,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     }
 
     function feesAmount() internal view returns (uint256) {
+        // copy-past with review state function
         uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
         uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
         return reviewerFeeAmount.add(platformFeeAmount);
@@ -101,14 +111,11 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         view
         returns (uint256)
     {
+        // alias
+        mapping (uint32 => uint256) storage bSOI = budgetSpentOnIteration;
+
         uint256 loggerRate = getLoggerRate(logger);
         uint256 loggerCosts = workMinutes.mul(loggerRate).div(60);
-        return contractorsReward.add(loggerCosts);
-    }
-
-    function addMinutesToIteration(uint32 minutesToAdd) internal {
-        // alias
-        mapping (uint32 => uint32) storage mDI = minutesDeliveredOnIteration;
-        mDI[iterationNumber] = uint32(mDI[iterationNumber].add(minutesToAdd));
+        return bSOI[iterationNumber].add(loggerCosts);
     }
 }
