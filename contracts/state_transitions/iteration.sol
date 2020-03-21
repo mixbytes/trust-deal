@@ -83,7 +83,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     {
         uint256 budgetWithoutFees = getBudgetWithoutFees();
         uint256 newlyCountedTotalCost = getNewlyCountedTotalCost(logger, workMinutes);
-        return budgetWithoutFees > newlyCountedTotalCost;
+        return budgetWithoutFees >= newlyCountedTotalCost;
     }
 
     function getBudgetWithoutFees() internal view returns (uint256) {

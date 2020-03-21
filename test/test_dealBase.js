@@ -306,10 +306,10 @@ contract('Deal. Base Test', async accounts => {
             dealContract.newApplication("mock", [worker1, worker2], [2000, 2000], {from: contractor})
         )
     })
-/*
+
     it("prepare for iteration", async() => {
         // approve tokens for deal contract
-        await dealTokenContract.approve(dealContract.address, 100000, {from: client})
+        await dealTokenContract.approve(dealContract.address, 120000, {from: client})
     })
 
     it("should fail iteration funding", async() => {
@@ -333,6 +333,9 @@ contract('Deal. Base Test', async accounts => {
 
         let balanceOfDeal = await dealTokenContract.balanceOf(dealContract.address);
         assert.equal(balanceOfDeal, funding);
+
+        currentState = await dealContract.getState()
+        assert.equal(currentState, States.ITERATON)
     })
 
     it("should fail funding new iteration", async() => {
@@ -342,14 +345,24 @@ contract('Deal. Base Test', async accounts => {
         )
     })
 
+    it("should fail deal finishing", async() => {
+        // wrong state
+        await expectThrow(
+            dealContract.finishDeal({from: client})
+        )
+    })
+
     it("should fail work logging", async() => {
+        let blocknumber = await web3.eth.getBlockNumber();
+        let block = await web3.eth.getBlock(blocknumber);
+        
         // invalid access
         await expectThrow(
-            dealContract.logWork(2**32-1, 10, "mock", {from: contractor})
+            dealContract.logWork(block.timestamp, 10, "mock", {from: contractor})
         )
         // empty info param
         await expectThrow(
-            dealContract.logWork(2**32-1, 10, "", {from: worker1})
+            dealContract.logWork(block.timestamp, 10, "", {from: worker1})
         )
 
         // timeout is met
@@ -363,24 +376,27 @@ contract('Deal. Base Test', async accounts => {
 
         // iteration timeout is met
         await expectThrow(
-            dealContract.logWork(2**32-1, 100, "mock", {from: worker1})
+            dealContract.logWork(block.timestamp, 100, "mock", {from: worker1})
         )
 
         await revertToSnapShot(snapshotId)
 
+        // wrong timestamp
+        await expectThrow(
+            dealContract.logWork(block.timestamp-100, 60, "mock", {from: worker1})
+        )
+        await expectThrow(
+            dealContract.logWork(2**32-2, 60, "mock", {from: worker1})
+        )
+
         // logging minutes over budget
-        // budgetWithoutFees = 99950, worker1Rate = 1000 => maxMin = 99950 * 60 / 1000 = 5997
+        // budgetWithoutFees = 99900, worker1Rate = 1000 => maxMins = 99900 * 60 / 1000 = 5994
         // TODO budgetWithoutFees does not containt platform fee
         await expectThrow(
-            dealContract.logWork(2**32-1, 5997, "mock", {from: worker1})
-        )
-
-        // little timestamp
-        await expectThrow(
-            dealContract.logWork(100000, 60, "mock", {from: worker1})
+            dealContract.logWork(block.timestamp, 5995, "mock", {from: worker1})
         )
     })
-
+/*
     // TODO dev-note comment 12
     it("should log work", async() => {
         await dealContract.logWork(2**32-1, 60, "60 mins", {from: worker1});
