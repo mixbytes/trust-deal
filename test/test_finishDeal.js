@@ -22,15 +22,10 @@ contract('Deal. Base Test', async accounts => {
     const platform = accounts[7];
 
     const reviewerFeeBPS = 5; // 5.div(10000)
-    const platformFeeBPS = 5;
-    let contractorReward;
 
     const iterationDuration = 60 * 60 * 24 * 14; // 14 days
-    let iterationStart;
-    let iterationNumber;
 
     const reviewerDecisionDuration = 60 * 60 * 24 * 5; // 5 days
-    let reviewerDecisionTimeIntervalStart;
 
     let dealBudget;
     let currentState;
@@ -53,35 +48,6 @@ contract('Deal. Base Test', async accounts => {
         }
         assert.fail('Expected throw not received');
     };
-
-    let takeSnapshot = () => {
-        return new Promise((resolve, reject) => {
-          web3.currentProvider.send({
-            jsonrpc: '2.0',
-            method: 'evm_snapshot',
-            id: new Date().getTime()
-          }, (err, snapshotId) => {
-            if (err) { return reject(err) }
-            return resolve(snapshotId)
-          })
-        })
-    }
-
-    let revertToSnapShot = (id) => {
-        return new Promise((resolve, reject) => {
-          web3.currentProvider.send({
-            jsonrpc: '2.0',
-            method: 'evm_revert',
-            params: [id],
-            id: new Date().getTime()
-          }, (err, result) => {
-            if (err) { return reject(err) }
-            return resolve(result)
-          })
-        })
-    }
-
-    let snapshotId;
 
     before('deploying deal and token', async() => {
         // Preparing and deploying token contract
@@ -303,187 +269,11 @@ contract('Deal. Base Test', async accounts => {
             dealContract.newApplication("mock", [worker1, worker2], [2000, 2000], {from: contractor})
         )
     })
-/*
-    it("prepare for iteration", async() => {
-        // approve tokens for deal contract
-        await dealTokenContract.approve(dealContract.address, 100000, {from: client})
-    })
 
-    it("should fail iteration funding", async() => {
-        // invalid access
+    it("should fail finish deal", async() => {
+        // wrong access
         await expectThrow(
-            dealContract.newIteration(500000, {from: contractor})
-        )
-        // too little
-        await expectThrow(
-            dealContract.newIteration(10000, {from: client})
-        )
-        // to much
-        await expectThrow(
-            dealContract.newIteration(10000000000, {from: client})
+            dealContract.finishDeal({from: contractor})
         )
     })
-
-    it("should fund new iteration", async() => {
-        let funding = 100000;
-        await dealContract.newIteration(funding, {from: client});
-
-        let balanceOfDeal = await dealTokenContract.balanceOf(dealContract.address);
-        assert.equal(balanceOfDeal, funding);
-    })
-
-    it("should fail funding new iteration", async() => {
-        // wrong state
-        await expectThrow(
-            dealContract.newIteration(100000, {from: client})
-        )
-    })
-
-    it("should fail work logging", async() => {
-        // invalid access
-        await expectThrow(
-            dealContract.logWork(2**32-1, 10, "mock", {from: contractor})
-        )
-        // empty info param
-        await expectThrow(
-            dealContract.logWork(2**32-1, 10, "", {from: worker1})
-        )
-
-        // timeout is met
-        let currentSnapshot = await takeSnapshot();
-        snapshotId = currentSnapshot['result']
-
-        await time.advanceBlock()
-        let start = await time.latest()
-        let end = start.add(time.duration.days(15));
-        await time.increaseTo(end)
-
-        // iteration timeout is met
-        await expectThrow(
-            dealContract.logWork(2**32-1, 100, "mock", {from: worker1})
-        )
-
-        await revertToSnapShot(snapshotId)
-
-        // logging minutes over budget
-        // budgetWithoutFees = 99950, worker1Rate = 1000 => maxMin = 99950 * 60 / 1000 = 5997
-        // TODO budgetWithoutFees does not containt platform fee
-        await expectThrow(
-            dealContract.logWork(2**32-1, 5997, "mock", {from: worker1})
-        )
-
-        // little timestamp
-        await expectThrow(
-            dealContract.logWork(100000, 60, "mock", {from: worker1})
-        )
-    })
-
-    // TODO dev-note comment 12
-    it("should log work", async() => {
-        await dealContract.logWork(2**32-1, 60, "60 mins", {from: worker1});
-        await dealContract.logWork(2**32-1, 60, "60 mins", {from: worker2});
-    })
-
-    // TODO test finish iteration with timeout
-    it("should fail finish iteration", async() => {
-        // invalid access
-        await expectThrow(
-            dealContract.finishIteration({from: worker1})
-        )
-    })
-
-    it("should finish iteration", async() => {
-        await dealContract.finishIteration({from: contractor})
-    })
-
-    it("should fail work logging due to call from wrong state", async() => {
-        await expectThrow(
-            dealContract.logWork(2**32-1, 60, "60 mins", {from: worker1})
-        )
-    })
-
-    it("should fail review-ok", async() => {
-        // invalid access
-        await expectThrow(
-            dealContract.reviewOk({from: contractor})
-        )
-
-        // TODO test review with timeout
-    })
-
-    it("should review ok", async() => {
-        let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
-        assert.equal(dealBudget, 100000)
-
-        await dealContract.reviewOk({from: reviewer2})
-
-        let costOfWorker1 = 1000; // 60 mins logged, 1hour = 1000
-        let costOfWorker2 = 1000; // 60 mins logged, 1hour = 1000
-
-        let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
-        assert.equal(costOfWorker1 + costOfWorker2, tokenBalanceOfContractor)
-        
-        let reviewerReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
-        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewer2)
-        assert.equal(tokenBalanceOfReviewer, reviewerReward)
-
-        let platformReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
-        let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
-        assert.equal(tokenBalanceOfPlatform, platformReward)
-    })
-
-    it("should fail review actions", async() => {
-        // wrong states
-        await expectThrow(
-            dealContract.reviewOk({from: reviewer2})
-        )
-        await expectThrow(
-            dealContract.reviewFailed({from: reviewer2})
-        )
-    })
-
-    it("should fund new iteration", async() => {
-        await dealTokenContract.approve(dealContract.address, 20000, {from: client})
-        await dealContract.newIteration(20000, {from: client})
-
-        // 97900 + 20000
-    })
-
-    it("should log work", async() => {
-        await dealContract.logWork(2**32-1, 120, "info", {from: worker1})
-        // cost 2 * 1000 = 2000
-    })
-
-    it("should finish iteration because of timeout", async() => {
-        // timeout is met
-        let currentSnapshot = await takeSnapshot();
-        snapshotId = currentSnapshot['result']
-
-        await time.advanceBlock()
-        let start = await time.latest()
-        let end = start.add(time.duration.days(14));
-        await time.increaseTo(end)
-
-        // iteration timeout is met
-        await dealContract.finishIteration({from: worker1})
-    })
-
-    it("should review fail", async() => {
-        let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
-        assert.equal(dealBudget, 97900 + 20000)
-        await dealContract.reviewFailed({from: reviewer2})
-
-        let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
-        let worker1Costs = 120/60 * 1000; // 2000
-        assert.equal(tokenBalanceOfContractor, 2000 + worker1Costs);
-
-        let platformReward = Math.floor(dealBudget * 5 / 100 / 100); // 58
-        let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
-        assert.equal(tokenBalanceOfPlatform, 50 + platformReward)
-
-        let reviewerReward = Math.floor(dealBudget * 5 / 100 / 100); // 58
-        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewer2)
-        assert.equal(tokenBalanceOfReviewer, 50 + reviewerReward)       
-    })
-*/
 })

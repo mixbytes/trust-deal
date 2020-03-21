@@ -1,7 +1,7 @@
 const Deal = artifacts.require("TMIterativeDeal");
 const DealToken = artifacts.require("DealToken");
 
-contract('Deal. Base Test', async accounts => {
+contract('Deal. Cancel INIT', async accounts => {
     const States = {
         INIT: 1,
         PROPOSED_REVIWER: 2,
