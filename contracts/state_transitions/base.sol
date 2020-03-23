@@ -17,7 +17,6 @@ contract DealDataRows {
 
     uint16 reviewerFeeBPS; // instead of reviewerReward
     uint16 platformFeeBPS; // instead of platformReward
-    uint256 contractorsReward;
 
     uint32 iterationDuration;
     uint32 iterationStart; // timestamp
@@ -28,7 +27,9 @@ contract DealDataRows {
 
     uint256 dealBudget;
     mapping (uint32 => uint32) minutesDeliveredOnIteration;
-    mapping (uint32 => uint256) budgetSpentOnIteration;
+    mapping (uint32 => uint256) spentContractorsRewardsOnIteration;
+    mapping (uint32 => uint256) spentReviewerRewardsOnIteration;
+    mapping (uint32 => uint256) spentPlatformRewardsOnIteration;
 
     struct Application {
         string description;
@@ -92,6 +93,7 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         dealMeanOfPayment = meanOfPayment;
 
         currentState = States.INIT;
+
         emit DealInitialized(msg.sender, shortName, task, iterationTimeSeconds, meanOfPayment);
     }
 }

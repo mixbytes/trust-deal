@@ -27,13 +27,9 @@ contract DealReviewStateLogic is BaseDealStateTransitioner,
             "Actor can't make review decision"
         );
 
-        (uint256 platformReward, uint256 reviewerReward) = calculatePlatformReviewerRewards();
         bool shouldPayReviewer = reviewDeadline > now;
+        rewardActors(shouldPayReviewer);
 
-        rewardActors(shouldPayReviewer, platformReward, reviewerReward);
-
-        dealBudget = dealBudget.sub(contractorsReward).sub(platformReward).sub(reviewerReward);
-        contractorsReward = 0;
         currentState = States.WAIT4DEPOSIT;
         emit DealTaskReviewedPositively(now.toUint32());
     }
@@ -41,18 +37,10 @@ contract DealReviewStateLogic is BaseDealStateTransitioner,
     function reviewFailed() external onlyReviewer nonReentrant {
         require(currentState == States.REVIEW, ERROR_WRONG_STATE_CALL);
 
-        (uint256 platformReward, uint256 reviewerReward) = calculatePlatformReviewerRewards();
-
-        rewardActors(true, platformReward, reviewerReward);
+        rewardActors(true);
         payRestToClient();
 
         currentState = States.END;
         emit DealEndedUp(States.REVIEW);
-    }
-
-    function calculatePlatformReviewerRewards() internal view returns (uint256, uint256) {
-        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
-        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
-        return (platformFeeAmount, reviewerFeeAmount);
     }
 }

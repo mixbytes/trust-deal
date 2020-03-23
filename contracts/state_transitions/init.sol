@@ -26,6 +26,7 @@ contract DealInitStateLogic is BaseDealStateTransitioner {
         reviewerDecisionDuration = reviewIntervalSeconds;
 
         currentState = States.PROPOSED_REVIEWER;
+
         emit ReviewerProposed(reviewer, reviewerFeeBPS, reviewerDecisionDuration);
     }
 
@@ -33,6 +34,7 @@ contract DealInitStateLogic is BaseDealStateTransitioner {
         require(currentState == States.INIT, ERROR_WRONG_STATE_CALL);
 
         currentState = States.END;
+
         emit DealEndedUp(States.INIT);
     }
 }

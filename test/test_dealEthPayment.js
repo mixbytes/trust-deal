@@ -1,9 +1,9 @@
 const { time } = require('openzeppelin-test-helpers');
 
 const Deal = artifacts.require("TMIterativeDeal");
-const DealToken = artifacts.require("DealToken");
+const BN = web3.utils.BN;
 
-contract('Deal. Base Test', async accounts => {
+contract('Deal. Eth payment', async accounts => {
     const States = {
         INIT: 1,
         PROPOSED_REVIWER: 2,
@@ -83,9 +83,6 @@ contract('Deal. Base Test', async accounts => {
     let snapshotId;
 
     before('deploying deal and token', async() => {
-        // Preparing and deploying token contract
-        dealTokenContract = await DealToken.new({from: client});
-        
         dealContract = await Deal.new(platform, 5, {from: client});
     });
 
@@ -95,20 +92,20 @@ contract('Deal. Base Test', async accounts => {
 
         // wrong access
         await expectThrow(
-            dealContract.init(shortName, taskMock, iterationDuration, dealTokenContract.address, {from: contractor})
+            dealContract.init(shortName, taskMock, iterationDuration, zeroAddress, {from: contractor})
         )
 
         // wrong param for iteration duration
         await expectThrow(
-            dealContract.init(shortName, taskMock, 0, dealTokenContract.address, {from: client})
+            dealContract.init(shortName, taskMock, 0, zeroAddress, {from: client})
         )
 
         // wrong task name and descr length
         await expectThrow(
-            dealContract.init("", taskMock, iterationDuration, dealTokenContract.address, {from: client})
+            dealContract.init("", taskMock, iterationDuration, zeroAddress, {from: client})
         )
         await expectThrow(
-            dealContract.init(shortName, "", iterationDuration, dealTokenContract.address, {from: client})
+            dealContract.init(shortName, "", iterationDuration, zeroAddress, {from: client})
         )
     })
 
@@ -117,7 +114,7 @@ contract('Deal. Base Test', async accounts => {
         let taskMock = "some string";
         let shortName = "lal";
 
-        await dealContract.init(shortName, taskMock, iterationDuration, dealTokenContract.address, {from: client})
+        await dealContract.init(shortName, taskMock, iterationDuration, zeroAddress, {from: client})
 
         currentState = await dealContract.getState({from: client});
         assert.equal(currentState, States.INIT)
@@ -125,7 +122,7 @@ contract('Deal. Base Test', async accounts => {
 
     it('should fail init second time', async() => {
         await expectThrow(
-            dealContract.init("12", "212", iterationDuration, dealTokenContract.address, {from: client})
+            dealContract.init("12", "212", iterationDuration, zeroAddress, {from: client})
         )
     })
     
@@ -292,7 +289,7 @@ contract('Deal. Base Test', async accounts => {
         assert.equal(dealInfo.state, States.DEPOSIT_WAIT)
         assert.equal(dealInfo.dealClient, client)
         assert.equal(dealInfo.iterationTimeSeconds, iterationDuration)
-        assert.equal(dealInfo.meanOfPayment, dealTokenContract.address)
+        assert.equal(dealInfo.meanOfPayment, 0)
         assert.equal(dealInfo.feeBPS, reviewerFeeBPS)
         assert.equal(dealInfo.reviewIntervalSeconds, reviewerDecisionDuration)
     })
@@ -304,31 +301,22 @@ contract('Deal. Base Test', async accounts => {
         )
     })
 
-    it("prepare for iteration", async() => {
-        // approve tokens for deal contract
-        await dealTokenContract.approve(dealContract.address, 120000, {from: client})
-    })
-
     it("should fail iteration funding", async() => {
         // invalid access
         await expectThrow(
-            dealContract.newIteration(500000, {from: contractor})
+            dealContract.newIteration(500000, {from: contractor, value: 500000})
         )
         // too little
         await expectThrow(
-            dealContract.newIteration(10000, {from: client})
-        )
-        // to much
-        await expectThrow(
-            dealContract.newIteration(10000000000, {from: client})
+            dealContract.newIteration(0, {from: client, value: 10000})
         )
     })
 
     it("should fund new iteration", async() => {
         let funding = 100000;
-        await dealContract.newIteration(funding, {from: client});
+        await dealContract.newIteration(funding, {from: client, value: funding});
 
-        let balanceOfDeal = await dealTokenContract.balanceOf(dealContract.address);
+        let balanceOfDeal = await web3.eth.getBalance(dealContract.address);
         assert.equal(balanceOfDeal, funding);
 
         currentState = await dealContract.getState()
@@ -339,7 +327,7 @@ contract('Deal. Base Test', async accounts => {
     it("should fail funding new iteration", async() => {
         // wrong state
         await expectThrow(
-            dealContract.newIteration(20000, {from: client})
+            dealContract.newIteration(20000, {from: client, value: 20000})
         )
     })
 
@@ -398,7 +386,6 @@ contract('Deal. Base Test', async accounts => {
         let iterStat = await dealContract.getIterationStat()
         let totalStat = await dealContract.getTotalStat()
 
-        // iter 1 without reviewer fee
         assert.equal(iterStat.currentNumber, iterationNumber)
         assert.equal(iterStat.minutesLogged, 0)
         assert.equal(iterStat.remainingBudget, 100000 - 50) // 50 = feeBPS/100 * dealBudget
@@ -461,7 +448,9 @@ contract('Deal. Base Test', async accounts => {
     })
 
     it("should review ok", async() => {
-        dealBudget = await dealTokenContract.balanceOf(dealContract.address);
+        let balanceOfContractorBeforeReview = await web3.eth.getBalance(contractor);
+        let balanceOfPlatformBeforeReview = await web3.eth.getBalance(platform)
+        dealBudget = await web3.eth.getBalance(dealContract.address);
         assert.equal(dealBudget, 100000)
 
         await dealContract.reviewOk({from: reviewerMain})
@@ -469,17 +458,12 @@ contract('Deal. Base Test', async accounts => {
         let costOfWorker1 = 1000; // 60 mins logged, 1hour = 1000
         let costOfWorker2 = 1000; // 60 mins logged, 1hour = 1000
 
-        let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
-        assert.equal(costOfWorker1 + costOfWorker2, tokenBalanceOfContractor)
-        
-        
-        let reviewerReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
-        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewerMain)
-        assert.equal(tokenBalanceOfReviewer, reviewerReward)
+        let balanceOfContractorAfterReview = await web3.eth.getBalance(contractor);
+        assert.equal(new BN(balanceOfContractorAfterReview).sub(new BN(balanceOfContractorBeforeReview)).toString(), String(costOfWorker1+costOfWorker2))
         
         let platformReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
-        let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
-        assert.equal(tokenBalanceOfPlatform, platformReward)
+        let balanceOfPlatformAfterReview = await web3.eth.getBalance(platform)
+        assert.equal(new BN(balanceOfPlatformAfterReview).sub(new BN(balanceOfPlatformBeforeReview)).toString(), String(platformReward))
 
         currentState = await dealContract.getState();
         assert.equal(currentState, States.DEPOSIT_WAIT)
@@ -496,15 +480,14 @@ contract('Deal. Base Test', async accounts => {
     })
 
     it("should fund new iteration", async() => {
-        await dealContract.newIteration(20000, {from: client})
-        let prevBudget = dealBudget;
-        dealBudget = await dealTokenContract.balanceOf(dealContract.address)
-        assert.equal(dealBudget, prevBudget.toNumber() + 20000 - 2000 - 100)
-
+        await dealContract.newIteration(20000, {from: client, value: 20000})
+        let prevBudget = new BN(dealBudget);
+        dealBudget = await web3.eth.getBalance(dealContract.address)
+        assert.equal(new BN(dealBudget).toString(), prevBudget.add(new BN(20000)).sub(new BN(2000+100)).toString())
 
         iterationNumber += 1;
     })
-
+/
     it("check deal stats before log", async() => {
         let iterStat = await dealContract.getIterationStat()
         let totalStat = await dealContract.getTotalStat()
@@ -554,19 +537,18 @@ contract('Deal. Base Test', async accounts => {
 
     it("should review fail", async() => {
         assert.equal(dealBudget, 117900)
+        let balanceOfContractorBeforeReview = await web3.eth.getBalance(contractor);
+        let balanceOfPlatformBeforeReview = await web3.eth.getBalance(platform)
+
         let tx = await dealContract.reviewFailed({from: reviewerMain})
 
-        let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
-        let worker1Costs = 120/60 * 1000; // 2000
-        assert.equal(tokenBalanceOfContractor, 2000 + worker1Costs);
+        let worker1Costs = 2000 // (120*1000 /60)
+        let balanceOfContractorAfterReview = await web3.eth.getBalance(contractor);
+        assert.equal(new BN(balanceOfContractorAfterReview).sub(new BN(balanceOfContractorBeforeReview)).toString(), String(worker1Costs))
 
         let platformReward = Math.floor(dealBudget * 5 / 100 / 100); // 58
-        let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
-        assert.equal(tokenBalanceOfPlatform, 50 + platformReward)
-
-        let reviewerReward = Math.floor(dealBudget * 5 / 100 / 100); // 58
-        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewerMain)
-        assert.equal(tokenBalanceOfReviewer, 50 + reviewerReward)
+        let balanceOfPlatformAfterReview = await web3.eth.getBalance(platform)
+        assert.equal(new BN(balanceOfPlatformAfterReview).sub(new BN(balanceOfPlatformBeforeReview)).toString(), String(platformReward))
         
         let transferedRestAmount = tx.logs[0].args.funds;
         assert.equal(transferedRestAmount, dealBudget - 2000 - 58 - 58)

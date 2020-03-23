@@ -1,8 +1,12 @@
 pragma solidity 0.5.7;
 
+import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 import './base.sol';
 
 contract DealPaymentsManager is DealDataRows {
+    using SafeMath for uint256;
+
     event TransferedRestOfFunds(uint256 funds);
     event DealFunded(uint256 fundingAmount);
 
@@ -21,8 +25,13 @@ contract DealPaymentsManager is DealDataRows {
         emit TransferedRestOfFunds(transferingAmount);
     }
 
+    function updateDealIterationBudget(uint256 fundingAmount, uint32 iteration) internal {
+        checkFundedAmount(fundingAmount);
+        dealBudget = dealBudget.add(fundingAmount);
+        spentPlatformRewardsOnIteration[iteration] = dealBudget.mul(platformFeeBPS).div(10000);
+    }
+
     function checkFundedAmount(uint256 fundingAmount) internal {
-        // Called only by client, that's why `msg.sender` used instead of `client`.
         if (address(dealMeanOfPayment) == address(0)) {
             require(msg.value > 10000 wei, ERROR_LITTLE_FUNDING_AMOUNT);
             emit DealFunded(msg.value);
@@ -36,31 +45,47 @@ contract DealPaymentsManager is DealDataRows {
         }
     }
 
+    function getPotentialReviewerReward() internal view returns (uint256) {
+        return dealBudget.mul(reviewerFeeBPS).div(10000);
+    }
+
     function rewardActors(
-        bool shouldRewardReviewer,
-        uint256 platformReward,
-        uint256 reviewerReward
+        bool shouldRewardReviewer
     )
         internal
     {
-        rewardContractor();
+        uint256 contractorsReward = spentContractorsRewardsOnIteration[iterationNumber];
+        uint256 platformReward = spentPlatformRewardsOnIteration[iterationNumber];
+        rewardContractor(contractorsReward);
         rewardPlatform(platformReward);
-        if (shouldRewardReviewer) rewardReviewer(reviewerReward);
+
+        uint256 reviewerReward;
+        if (shouldRewardReviewer) {
+            defineReviewerReward();
+            reviewerReward = spentReviewerRewardsOnIteration[iterationNumber];
+            rewardReviewer(reviewerReward);
+        }
+        dealBudget = dealBudget.sub(contractorsReward).sub(platformReward).sub(reviewerReward);
     }
 
-    function rewardContractor() internal {
-        sendAssetsTo(contractor, contractorsReward, ERROR_REWARD_TRANSFER_FAILED);
+    function rewardContractor(uint256 amount) private {
+        sendAssetsTo(contractor, amount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function rewardPlatform(uint256 platformFeeAmount) internal {
-        sendAssetsTo(platform, platformFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
+    function rewardPlatform(uint256 amount) private {
+        sendAssetsTo(platform, amount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function rewardReviewer(uint256 reviewerFeeAmount) internal {
-        sendAssetsTo(reviewer, reviewerFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
+    function rewardReviewer(uint256 amount) private {
+        sendAssetsTo(reviewer, amount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function sendAssetsTo(address payable who, uint256 howMuch, string memory errorMsg) internal {
+    function defineReviewerReward() private {
+        mapping (uint32 => uint256) storage sRROI = spentReviewerRewardsOnIteration;
+        sRROI[iterationNumber] = getPotentialReviewerReward();
+    }
+
+    function sendAssetsTo(address payable who, uint256 howMuch, string memory errorMsg) private {
         if (address(dealMeanOfPayment) == address(0)) {
             bool success = who.send(howMuch);
             require(success, errorMsg);

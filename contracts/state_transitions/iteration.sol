@@ -3,9 +3,10 @@ pragma solidity 0.5.7;
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import './base.sol';
+import './dealAssetPayer.sol';
 import '../utils/Uint256Caster.sol';
 
-contract DealIterationStateLogic is BaseDealStateTransitioner {
+contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManager {
     using Uint256Caster for uint256;
     using SafeMath for uint32;
     using SafeMath for uint256;
@@ -24,8 +25,9 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(bytes(info).length > 0, "Info string is empty");
         require(isNotLoggingOverBudget(msg.sender, workMinutes), "Logged minutes over budget");
 
-        addMinutesToIteration(workMinutes);
-        contractorsReward = getNewlyCountedTotalCost(msg.sender, workMinutes);
+        addWorkMinutes(workMinutes);
+        addWorkCosts(msg.sender, workMinutes);
+
         emit LoggedWork(iterationNumber, logTimestamp, workMinutes, info);
     }
 
@@ -39,6 +41,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
 
         reviewerDecisionTimeIntervalStart = now.toUint32();
         currentState = States.REVIEW;
+
         emit IterationFinished(now.toUint32());
     }
 
@@ -48,11 +51,25 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         uint256 remainingBudget,
         uint256 spentBudget
     ) {
+        // Not sure if is right requirement
         require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
+
         currentNumber = iterationNumber;
         minutesLogged = minutesDeliveredOnIteration[iterationNumber];
-        remainingBudget = dealBudget.sub(contractorsReward).sub(feesAmount());
-        spentBudget = contractorsReward.add(feesAmount());
+
+        //alias
+        mapping (uint32 => uint256) storage sCROI = spentContractorsRewardsOnIteration;
+        mapping (uint32 => uint256) storage sRROI = spentReviewerRewardsOnIteration;
+        mapping (uint32 => uint256) storage sPROI = spentPlatformRewardsOnIteration;
+        spentBudget = sCROI[iterationNumber].add(
+            sPROI[iterationNumber].add(sRROI[iterationNumber])
+        );
+
+        if (currentState != States.END) {
+            remainingBudget = dealBudget.sub(spentBudget);
+        } else {
+            remainingBudget = 0;
+        }
     }
 
     function getTotalStat() external view returns (
@@ -61,19 +78,19 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     ) {
         // Not sure if is right requirement
         require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
+
+        // alias
+        mapping (uint32 => uint256) storage sCROI = spentContractorsRewardsOnIteration;
+        mapping (uint32 => uint256) storage sRROI = spentReviewerRewardsOnIteration;
+        mapping (uint32 => uint256) storage sPROI = spentPlatformRewardsOnIteration;
         for (uint32 i = 1; i <= iterationNumber; i++) {
             totalMinutesLogged = uint32(totalMinutesLogged.add(minutesDeliveredOnIteration[i]));
-            totalSpentBudget = totalSpentBudget.add(budgetSpentOnIteration[i]);
+            totalSpentBudget = totalSpentBudget.add(sCROI[i].add(sPROI[i]).add(sRROI[i]));
         }
     }
 
     function isEmployee(address logger) internal view returns (bool) {
         return getLoggerRate(logger) != 0;
-    }
-
-    function getLoggerRate(address logger) internal view returns (uint256) {
-        mapping (address => uint256) storage e = applications[contractor].employeesRates;
-        return e[logger];
     }
 
     function isNotLoggingOverBudget(address logger, uint32 workMinutes)
@@ -82,33 +99,42 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         returns (bool)
     {
         uint256 budgetWithoutFees = getBudgetWithoutFees();
-        uint256 newlyCountedTotalCost = getNewlyCountedTotalCost(logger, workMinutes);
-        return budgetWithoutFees > newlyCountedTotalCost;
+        uint256 newlyCountedTotalCost = getActualContractorsReward(logger, workMinutes);
+
+        return budgetWithoutFees >= newlyCountedTotalCost;
     }
 
     function getBudgetWithoutFees() internal view returns (uint256) {
-        return dealBudget.sub(feesAmount());
+        uint256 reviewerReward = getPotentialReviewerReward();
+        uint256 platformReward = spentPlatformRewardsOnIteration[iterationNumber];
+
+        return dealBudget.sub(reviewerReward).sub(platformReward);
     }
 
-    function feesAmount() internal view returns (uint256) {
-        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
-        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
-        return reviewerFeeAmount.add(platformFeeAmount);
-    }
-
-    function getNewlyCountedTotalCost(address logger, uint32 workMinutes)
+    function getActualContractorsReward(address logger, uint32 workMinutes)
         internal
         view
         returns (uint256)
     {
         uint256 loggerRate = getLoggerRate(logger);
         uint256 loggerCosts = workMinutes.mul(loggerRate).div(60);
-        return contractorsReward.add(loggerCosts);
+
+        return spentContractorsRewardsOnIteration[iterationNumber].add(loggerCosts);
     }
 
-    function addMinutesToIteration(uint32 minutesToAdd) internal {
-        // alias
+    function getLoggerRate(address logger) internal view returns (uint256) {
+        mapping (address => uint256) storage e = applications[contractor].employeesRates;
+
+        return e[logger];
+    }
+
+    function addWorkMinutes(uint32 minutesWorked) internal {
         mapping (uint32 => uint32) storage mDI = minutesDeliveredOnIteration;
-        mDI[iterationNumber] = uint32(mDI[iterationNumber].add(minutesToAdd));
+        mDI[iterationNumber] = uint32(mDI[iterationNumber].add(minutesWorked));
+    }
+
+    function addWorkCosts(address logger, uint32 workMinutes) internal {
+        mapping (uint32 => uint256) storage sCROI = spentContractorsRewardsOnIteration;
+        sCROI[iterationNumber] = getActualContractorsReward(logger, workMinutes);
     }
 }

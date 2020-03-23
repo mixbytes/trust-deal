@@ -23,11 +23,12 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
 
         applications[msg.sender] = Application(application);
         mapping(address => uint256) storage e = applications[msg.sender].employeesRates;
-        for (uint16 i; i < workers.length; i++) {
+        for (uint8 i; i < workers.length; i++) {
             require(
                 workers[i] != address(0) && rates[i] != 0,
                 "Wrong application params: address or related rate are equal to 0"
             );
+            require(e[workers[i]] == 0, "Application state same worker twice");
             e[workers[i]] = rates[i];
         }
         emit ApplicationAdded(msg.sender, application, workers, rates);
@@ -36,7 +37,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
     function cancelRFP() external onlyClient {
         require(currentState == States.RFP, ERROR_WRONG_STATE_CALL);
 
-        currentState == States.END;
+        currentState = States.END;
         emit DealEndedUp(States.RFP);
     }
 
@@ -51,14 +52,6 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         contractor = contractorForDeal;
         currentState = States.WAIT4DEPOSIT;
         emit ContractorChosen(contractor);
-    }
-
-    function hasProvidedApplication(address checkingContractor) internal view returns (bool) {
-        Application storage a = applications[checkingContractor];
-        if (bytes(a.description).length == 0) {
-            return false;
-        }
-        return true;
     }
 
     function getReviewer() external view returns (address) {
@@ -87,5 +80,13 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         dealReviewer = reviewer;
         feeBPS = reviewerFeeBPS;
         reviewIntervalSeconds = reviewerDecisionDuration;
+    }
+
+    function hasProvidedApplication(address checkingContractor) internal view returns (bool) {
+        Application storage a = applications[checkingContractor];
+        if (bytes(a.description).length == 0) {
+            return false;
+        }
+        return true;
     }
 }
