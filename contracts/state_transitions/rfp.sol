@@ -23,7 +23,7 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
 
         applications[msg.sender] = Application(application);
         mapping(address => uint256) storage e = applications[msg.sender].employeesRates;
-        for (uint16 i; i < workers.length; i++) {
+        for (uint8 i; i < workers.length; i++) {
             require(
                 workers[i] != address(0) && rates[i] != 0,
                 "Wrong application params: address or related rate are equal to 0"

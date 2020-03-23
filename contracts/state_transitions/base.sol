@@ -93,6 +93,7 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         dealMeanOfPayment = meanOfPayment;
 
         currentState = States.INIT;
+
         emit DealInitialized(msg.sender, shortName, task, iterationTimeSeconds, meanOfPayment);
     }
 }

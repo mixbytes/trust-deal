@@ -45,25 +45,33 @@ contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManag
         emit IterationFinished(now.toUint32());
     }
 
-    // TODO unfinished
     function getIterationStat() external view returns (
         uint32 currentNumber,
         uint32 minutesLogged,
         uint256 remainingBudget,
         uint256 spentBudget
     ) {
+        // Not sure if is right requirement
         require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
+
         currentNumber = iterationNumber;
         minutesLogged = minutesDeliveredOnIteration[iterationNumber];
 
         //alias
         mapping (uint32 => uint256) storage sCROI = spentContractorsRewardsOnIteration;
+        mapping (uint32 => uint256) storage sRROI = spentReviewerRewardsOnIteration;
         mapping (uint32 => uint256) storage sPROI = spentPlatformRewardsOnIteration;
-        remainingBudget = dealBudget.sub(sCROI[iterationNumber]).sub(sPROI[iterationNumber]);
-        spentBudget = sCROI[iterationNumber].add(sPROI[iterationNumber]);
+        spentBudget = sCROI[iterationNumber].add(
+            sPROI[iterationNumber].add(sRROI[iterationNumber])
+        );
+
+        if (currentState != States.END) {
+            remainingBudget = dealBudget.sub(spentBudget);
+        } else {
+            remainingBudget = 0;
+        }
     }
 
-    // TODO unfinished
     function getTotalStat() external view returns (
         uint32 totalMinutesLogged,
         uint256 totalSpentBudget
@@ -98,9 +106,9 @@ contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManag
 
     function getBudgetWithoutFees() internal view returns (uint256) {
         uint256 reviewerReward = getPotentialReviewerReward();
-        mapping (uint32 => uint256) storage sPROI = spentPlatformRewardsOnIteration;
+        uint256 platformReward = spentPlatformRewardsOnIteration[iterationNumber];
 
-        return dealBudget.sub(reviewerReward).sub(sPROI[iterationNumber]);
+        return dealBudget.sub(reviewerReward).sub(platformReward);
     }
 
     function getActualContractorsReward(address logger, uint32 workMinutes)
@@ -108,11 +116,10 @@ contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManag
         view
         returns (uint256)
     {
-        mapping (uint32 => uint256) storage sCROI = spentContractorsRewardsOnIteration;
         uint256 loggerRate = getLoggerRate(logger);
         uint256 loggerCosts = workMinutes.mul(loggerRate).div(60);
 
-        return sCROI[iterationNumber].add(loggerCosts);
+        return spentContractorsRewardsOnIteration[iterationNumber].add(loggerCosts);
     }
 
     function getLoggerRate(address logger) internal view returns (uint256) {

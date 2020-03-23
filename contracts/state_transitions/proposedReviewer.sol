@@ -17,6 +17,7 @@ contract DealProposedReviewerStateLogic is BaseDealStateTransitioner {
 
     function _acceptReviewConditions() internal onlyReviewer {
         currentState = States.RFP;
+
         emit ReviewerAcceptedConditions(msg.sender);
     }
 
@@ -26,6 +27,7 @@ contract DealProposedReviewerStateLogic is BaseDealStateTransitioner {
         delete reviewerDecisionDuration;
 
         currentState = States.INIT;
+
         emit ReviewerDeclinedConditions(msg.sender);
     }
 }

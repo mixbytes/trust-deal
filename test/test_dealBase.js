@@ -25,15 +25,11 @@ contract('Deal. Base Test', async accounts => {
     const platform = accounts[7];
 
     const reviewerFeeBPS = 5; // 5.div(100)
-    const platformFeeBPS = 5;
-    let contractorReward;
 
     const iterationDuration = 60 * 60 * 24 * 14; // 14 days
-    let iterationStart;
     let iterationNumber;
 
     const reviewerDecisionDuration = 60 * 60 * 24 * 5; // 5 days
-    let reviewerDecisionTimeIntervalStart;
 
     let dealBudget;
     let currentState;
@@ -271,7 +267,7 @@ contract('Deal. Base Test', async accounts => {
 
         // wrong contractor address value
         await expectThrow(
-            dealContract.approveApplication("0x0000000000000000000000000000000000000000", {from: client})
+            dealContract.approveApplication(zeroAddress, {from: client})
         )
 
         // contractor hasn't got applications
@@ -302,6 +298,7 @@ contract('Deal. Base Test', async accounts => {
     })
 
     it('should fail add new applications', async() => {
+        // wrong state
         await expectThrow(
             dealContract.newApplication("mock", [worker1, worker2], [2000, 2000], {from: contractor})
         )
@@ -342,7 +339,7 @@ contract('Deal. Base Test', async accounts => {
     it("should fail funding new iteration", async() => {
         // wrong state
         await expectThrow(
-            dealContract.newIteration(100000, {from: client})
+            dealContract.newIteration(20000, {from: client})
         )
     })
 
@@ -397,7 +394,7 @@ contract('Deal. Base Test', async accounts => {
         )
     })
 
-    it("checking iteration vars", async() => {
+    it("checking iteration stats", async() => {
         let iterStat = await dealContract.getIterationStat()
         let totalStat = await dealContract.getTotalStat()
 
@@ -426,7 +423,7 @@ contract('Deal. Base Test', async accounts => {
         assert.equal(iterStat.remainingBudget, 100000 - 50 - 1000 - 1000) // 50 = feeBPS/100 * dealBudget
         assert.equal(iterStat.spentBudget, 50 + 1000 + 1000)
 
-        assert.equal(totalStat.totalMinutesLogged, 120)
+        assert.equal(totalStat.totalMinutesLogged, 60 + 60)
         assert.equal(totalStat.totalSpentBudget, 50 + 1000 + 1000)
     })
 
@@ -514,7 +511,7 @@ contract('Deal. Base Test', async accounts => {
 
         assert.equal(iterStat.currentNumber, iterationNumber)
         assert.equal(iterStat.minutesLogged, 0)
-        assert.equal(iterStat.remainingBudget, dealBudget - 58) // 50 = feeBPS/100/100 * dealBudget
+        assert.equal(iterStat.remainingBudget, dealBudget - 58) // 58 = feeBPS/100/100 * dealBudget
         assert.equal(iterStat.spentBudget, 58)
         
         assert.equal(totalStat.totalMinutesLogged, 120)
@@ -527,7 +524,16 @@ contract('Deal. Base Test', async accounts => {
         await dealContract.logWork(block.timestamp, 120, "info", {from: worker1})
         // cost 120/60 * 1000 = 2000
 
-        // TODO check stats here
+        let iterStat = await dealContract.getIterationStat()
+        let totalStat = await dealContract.getTotalStat()
+
+        assert.equal(iterStat.currentNumber, iterationNumber)
+        assert.equal(iterStat.minutesLogged, 120)
+        assert.equal(iterStat.remainingBudget, dealBudget - 58 - 2000) // 58 = feeBPS/100/100 * dealBudget
+        assert.equal(iterStat.spentBudget, 58 + 2000)
+        
+        assert.equal(totalStat.totalMinutesLogged, 120 + 120)
+        assert.equal(totalStat.totalSpentBudget, 50 + 50 + 1000 + 1000 + 58 + 2000)
     })
 
     it("should finish iteration because of timeout", async() => {
@@ -563,11 +569,22 @@ contract('Deal. Base Test', async accounts => {
         assert.equal(tokenBalanceOfReviewer, 50 + reviewerReward)
         
         let transferedRestAmount = tx.logs[0].args.funds;
-        assert.equal(transferedRestAmount, 117900 - 2000 - 58 - 58)
+        assert.equal(transferedRestAmount, dealBudget - 2000 - 58 - 58)
     })
 
-    it("should have END state", async() => {
+    it("check deal stat in END state is right", async() => {
         currentState = await dealContract.getState()
         assert.equal(currentState, States.END)
+
+        let iterStat = await dealContract.getIterationStat()
+        let totalStat = await dealContract.getTotalStat()
+
+        assert.equal(iterStat.currentNumber, iterationNumber)
+        assert.equal(iterStat.minutesLogged, 120)
+        assert.equal(iterStat.remainingBudget, 0)
+        assert.equal(iterStat.spentBudget, 58 + 2000 + 58)
+        
+        assert.equal(totalStat.totalMinutesLogged, 120 + 120)
+        assert.equal(totalStat.totalSpentBudget, 50 + 50 + 1000 + 1000 + 58 + 2000 + 58)
     })
 })

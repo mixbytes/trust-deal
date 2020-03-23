@@ -61,7 +61,7 @@ contract DealPaymentsManager is DealDataRows {
 
         uint256 reviewerReward;
         if (shouldRewardReviewer) {
-            setReviewerReward();
+            defineReviewerReward();
             reviewerReward = spentReviewerRewardsOnIteration[iterationNumber];
             rewardReviewer(reviewerReward);
         }
@@ -80,9 +80,9 @@ contract DealPaymentsManager is DealDataRows {
         sendAssetsTo(reviewer, amount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function setReviewerReward() private {
+    function defineReviewerReward() private {
         mapping (uint32 => uint256) storage sRROI = spentReviewerRewardsOnIteration;
-        sRROI[iterationNumber] = dealBudget.mul(reviewerFeeBPS).div(10000);
+        sRROI[iterationNumber] = getPotentialReviewerReward();
     }
 
     function sendAssetsTo(address payable who, uint256 howMuch, string memory errorMsg) private {

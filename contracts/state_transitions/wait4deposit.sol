@@ -22,6 +22,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsMa
         payRestToClient();
 
         currentState = States.END;
+
         emit DealEndedUp(States.WAIT4DEPOSIT);
     }
 
