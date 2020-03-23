@@ -66,6 +66,12 @@ contract DealPaymentsManager is DealDataRows {
         sendAssetsTo(contractor, contractorsReward, ERROR_REWARD_TRANSFER_FAILED);
     }
 
+    function getPlatformReviewerRewards() internal view returns (uint256, uint256) {
+        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
+        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
+        return (platformFeeAmount, reviewerFeeAmount);
+    }
+
     function rewardPlatform(uint256 platformFeeAmount) internal {
         sendAssetsTo(platform, platformFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
     }
@@ -87,11 +93,5 @@ contract DealPaymentsManager is DealDataRows {
         // copy-past with review state function
         (uint256 platformReward, uint256 reviewerReward) = getPlatformReviewerRewards();
         return platformReward.add(reviewerReward);
-    }
-
-    function getPlatformReviewerRewards() internal view returns (uint256, uint256) {
-        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
-        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
-        return (platformFeeAmount, reviewerFeeAmount);
     }
 }

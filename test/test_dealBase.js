@@ -461,12 +461,10 @@ contract('Deal. Base Test', async accounts => {
         await expectThrow(
             dealContract.reviewOk({from: contractor})
         )
-
-        // TODO test review with timeout
     })
 
     it("should review ok", async() => {
-        let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
+        dealBudget = await dealTokenContract.balanceOf(dealContract.address);
         assert.equal(dealBudget, 100000)
 
         await dealContract.reviewOk({from: reviewerMain})
@@ -485,6 +483,9 @@ contract('Deal. Base Test', async accounts => {
         let platformReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
         let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
         assert.equal(tokenBalanceOfPlatform, platformReward)
+
+        currentState = await dealContract.getState();
+        assert.equal(currentState, States.DEPOSIT_WAIT)
     })
 
     it("should fail review actions", async() => {
@@ -496,17 +497,38 @@ contract('Deal. Base Test', async accounts => {
             dealContract.reviewFailed({from: reviewerMain})
         )
     })
-/*
-    it("should fund new iteration", async() => {
-        await dealTokenContract.approve(dealContract.address, 20000, {from: client})
-        await dealContract.newIteration(20000, {from: client})
 
-        // 97900 + 20000
+    it("should fund new iteration", async() => {
+        await dealContract.newIteration(20000, {from: client})
+        let prevBudget = dealBudget;
+        dealBudget = await dealTokenContract.balanceOf(dealContract.address)
+        assert.equal(dealBudget, prevBudget.toNumber() + 20000 - 2000 - 100)
+
+
+        iterationNumber += 1;
+    })
+
+    // TODO
+    it("check deal stats before log", async() => {
+        let iterStat = await dealContract.getIterationStat()
+        let totalStat = await dealContract.getTotalStat()
+
+        assert.equal(iterStat.currentNumber, iterationNumber)
+        assert.equal(iterStat.minutesLogged, 0)
+        assert.equal(iterStat.remainingBudget, dealBudget - 58 - 58) // 50 = feeBPS/100/100 * dealBudget
+        assert.equal(iterStat.spentBudget, 58 + 58)
+        
+        assert.equal(totalStat.totalMinutesLogged, 120)
+        assert.equal(totalStat.totalSpentBudget, 50 + 50 + 1000 + 1000 + 58 + 58) // failing here, because 58*4
     })
 
     it("should log work", async() => {
-        await dealContract.logWork(2**32-1, 120, "info", {from: worker1})
-        // cost 2 * 1000 = 2000
+        let blocknumber = await web3.eth.getBlockNumber();
+        let block = await web3.eth.getBlock(blocknumber);
+        await dealContract.logWork(block.timestamp, 120, "info", {from: worker1})
+        // cost 120/60 * 1000 = 2000
+
+        // TODO check stats here
     })
 
     it("should finish iteration because of timeout", async() => {
@@ -521,12 +543,13 @@ contract('Deal. Base Test', async accounts => {
 
         // iteration timeout is met
         await dealContract.finishIteration({from: worker1})
+        currentState = await dealContract.getState()
+        assert.equal(currentState, States.REVIEW)
     })
 
     it("should review fail", async() => {
-        let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
-        assert.equal(dealBudget, 97900 + 20000)
-        await dealContract.reviewFailed({from: reviewer2})
+        assert.equal(dealBudget, 117900)
+        let tx = await dealContract.reviewFailed({from: reviewerMain})
 
         let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
         let worker1Costs = 120/60 * 1000; // 2000
@@ -537,8 +560,15 @@ contract('Deal. Base Test', async accounts => {
         assert.equal(tokenBalanceOfPlatform, 50 + platformReward)
 
         let reviewerReward = Math.floor(dealBudget * 5 / 100 / 100); // 58
-        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewer2)
-        assert.equal(tokenBalanceOfReviewer, 50 + reviewerReward)       
+        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewerMain)
+        assert.equal(tokenBalanceOfReviewer, 50 + reviewerReward)
+        
+        let transferedRestAmount = tx.logs[0].args.funds;
+        assert.equal(transferedRestAmount, 117900 - 2000 - 58 - 58)
     })
-*/
+
+    it("should have END state", async() => {
+        currentState = await dealContract.getState()
+        assert.equal(currentState, States.END)
+    })
 })
