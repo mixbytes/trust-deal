@@ -3,7 +3,7 @@ pragma solidity 0.5.7;
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import './base.sol';
-import './dealAssetPayer.sol';
+import './dealAssetManager.sol';
 import '../utils/Uint256Caster.sol';
 
 contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsManager {

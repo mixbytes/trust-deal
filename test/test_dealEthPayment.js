@@ -109,7 +109,6 @@ contract('Deal. Eth payment', async accounts => {
         )
     })
 
-    // TODO add test with ether as deal currency
     it("should move state to INIT", async() => {
         let taskMock = "some string";
         let shortName = "lal";

@@ -3,7 +3,7 @@ pragma solidity 0.5.7;
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import './base.sol';
-import './dealAssetPayer.sol';
+import './dealAssetManager.sol';
 import '../utils/Uint256Caster.sol';
 
 contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManager {
@@ -99,7 +99,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManag
         returns (bool)
     {
         uint256 budgetWithoutFees = getBudgetWithoutFees();
-        uint256 newlyCountedTotalCost = getActualContractorsReward(logger, workMinutes);
+        uint256 newlyCountedTotalCost = getRecalculatedContractorsReward(logger, workMinutes);
 
         return budgetWithoutFees >= newlyCountedTotalCost;
     }
@@ -111,7 +111,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManag
         return dealBudget.sub(reviewerReward).sub(platformReward);
     }
 
-    function getActualContractorsReward(address logger, uint32 workMinutes)
+    function getRecalculatedContractorsReward(address logger, uint32 workMinutes)
         internal
         view
         returns (uint256)
@@ -135,6 +135,6 @@ contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManag
 
     function addWorkCosts(address logger, uint32 workMinutes) internal {
         mapping (uint32 => uint256) storage sCROI = spentContractorsRewardsOnIteration;
-        sCROI[iterationNumber] = getActualContractorsReward(logger, workMinutes);
+        sCROI[iterationNumber] = getRecalculatedContractorsReward(logger, workMinutes);
     }
 }

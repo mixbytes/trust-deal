@@ -4,7 +4,7 @@ import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import '../../node_modules/openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol';
 
 import './base.sol';
-import './dealAssetPayer.sol';
+import './dealAssetManager.sol';
 import '../utils/Uint256Caster.sol';
 
 contract DealReviewStateLogic is BaseDealStateTransitioner,
