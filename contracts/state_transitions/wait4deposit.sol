@@ -27,9 +27,8 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsMa
     function newIteration(uint256 fundingAmount) external payable onlyClient {
         require(currentState == States.WAIT4DEPOSIT, ERROR_WRONG_STATE_CALL);
 
-        checkFundedAmount(fundingAmount);
+        increaseDealBudget(fundingAmount);
 
-        dealBudget = dealBudget.add(fundingAmount);
         iterationStart = now.toUint32();
         iterationNumber = uint32(iterationNumber.add(1));
         currentState = States.ITERATION;

@@ -1,8 +1,12 @@
 pragma solidity 0.5.7;
 
+import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 import './base.sol';
 
 contract DealPaymentsManager is DealDataRows {
+    using SafeMath for uint256;
+
     event TransferedRestOfFunds(uint256 funds);
     event DealFunded(uint256 fundingAmount);
 
@@ -21,8 +25,12 @@ contract DealPaymentsManager is DealDataRows {
         emit TransferedRestOfFunds(transferingAmount);
     }
 
+    function increaseDealBudget(uint256 fundingAmount) internal {
+        checkFundedAmount(fundingAmount);
+        dealBudget = dealBudget.add(fundingAmount);
+    }
+
     function checkFundedAmount(uint256 fundingAmount) internal {
-        // Called only by client, that's why `msg.sender` used instead of `client`.
         if (address(dealMeanOfPayment) == address(0)) {
             require(msg.value > 10000 wei, ERROR_LITTLE_FUNDING_AMOUNT);
             emit DealFunded(msg.value);
@@ -37,15 +45,16 @@ contract DealPaymentsManager is DealDataRows {
     }
 
     function rewardActors(
-        bool shouldRewardReviewer,
-        uint256 platformReward,
-        uint256 reviewerReward
+        bool shouldRewardReviewer
     )
         internal
     {
         rewardContractor();
+        (uint256 platformReward, uint256 reviewerReward) = getPlatformReviewerRewards();
         rewardPlatform(platformReward);
         if (shouldRewardReviewer) rewardReviewer(reviewerReward);
+
+        dealBudget = dealBudget.sub(contractorsReward).sub(platformReward).sub(reviewerReward);
     }
 
     function rewardContractor() internal {
@@ -67,5 +76,17 @@ contract DealPaymentsManager is DealDataRows {
         } else {
             require(dealMeanOfPayment.transfer(who, howMuch), errorMsg);
         }
+    }
+
+    function getFeesTotalAmount() internal view returns (uint256) {
+        // copy-past with review state function
+        (uint256 platformReward, uint256 reviewerReward) = getPlatformReviewerRewards();
+        return platformReward.add(reviewerReward);
+    }
+
+    function getPlatformReviewerRewards() internal view returns (uint256, uint256) {
+        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
+        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
+        return (platformFeeAmount, reviewerFeeAmount);
     }
 }

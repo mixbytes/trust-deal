@@ -3,9 +3,10 @@ pragma solidity 0.5.7;
 import "../../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import './base.sol';
+import './dealAssetPayer.sol';
 import '../utils/Uint256Caster.sol';
 
-contract DealIterationStateLogic is BaseDealStateTransitioner {
+contract DealIterationStateLogic is BaseDealStateTransitioner, DealPaymentsManager {
     using Uint256Caster for uint256;
     using SafeMath for uint32;
     using SafeMath for uint256;
@@ -48,6 +49,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         emit IterationFinished(now.toUint32());
     }
 
+    // TODO unfinished
     function getIterationStat() external view returns (
         uint32 currentNumber,
         uint32 minutesLogged,
@@ -60,10 +62,11 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
 
         //alias
         mapping (uint32 => uint256) storage bSOI = budgetSpentOnIteration;
-        remainingBudget = dealBudget.sub(bSOI[iterationNumber]).sub(feesAmount());
-        spentBudget = bSOI[iterationNumber].add(feesAmount());
+        remainingBudget = dealBudget.sub(bSOI[iterationNumber]).sub(getFeesTotalAmount());
+        spentBudget = bSOI[iterationNumber].add(getFeesTotalAmount());
     }
 
+    // TODO unfinished
     function getTotalStat() external view returns (
         uint32 totalMinutesLogged,
         uint256 totalSpentBudget
@@ -72,7 +75,9 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
         require(currentState >= States.ITERATION, ERROR_WRONG_STATE_CALL);
         for (uint32 i = 1; i <= iterationNumber; i++) {
             totalMinutesLogged = uint32(totalMinutesLogged.add(minutesDeliveredOnIteration[i]));
-            totalSpentBudget = totalSpentBudget.add(budgetSpentOnIteration[i].add(feesAmount()));
+            totalSpentBudget = totalSpentBudget.add(
+                budgetSpentOnIteration[i].add(getFeesTotalAmount())
+            );
         }
     }
 
@@ -96,14 +101,7 @@ contract DealIterationStateLogic is BaseDealStateTransitioner {
     }
 
     function getBudgetWithoutFees() internal view returns (uint256) {
-        return dealBudget.sub(feesAmount());
-    }
-
-    function feesAmount() internal view returns (uint256) {
-        // copy-past with review state function
-        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
-        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
-        return reviewerFeeAmount.add(platformFeeAmount);
+        return dealBudget.sub(getFeesTotalAmount());
     }
 
     function getNewlyCountedTotalCost(address logger, uint32 workMinutes)
