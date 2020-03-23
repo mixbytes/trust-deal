@@ -1,11 +1,10 @@
 # trust-deal
 
 ## To be done:
-1) resolve todos
-2) resolve issues on GitHub
-3) requirement for logTimestamp
+1) implement DealsRegistry
 
-Run tests with:
+## Test
+Run local tests with:
 ```
 npx truffle test
 
