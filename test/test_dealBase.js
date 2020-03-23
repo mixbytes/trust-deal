@@ -464,12 +464,12 @@ contract('Deal. Base Test', async accounts => {
 
         // TODO test review with timeout
     })
-/*
+
     it("should review ok", async() => {
         let dealBudget = await dealTokenContract.balanceOf(dealContract.address);
         assert.equal(dealBudget, 100000)
 
-        await dealContract.reviewOk({from: reviewer2})
+        await dealContract.reviewOk({from: reviewerMain})
 
         let costOfWorker1 = 1000; // 60 mins logged, 1hour = 1000
         let costOfWorker2 = 1000; // 60 mins logged, 1hour = 1000
@@ -477,10 +477,11 @@ contract('Deal. Base Test', async accounts => {
         let tokenBalanceOfContractor = await dealTokenContract.balanceOf(contractor);
         assert.equal(costOfWorker1 + costOfWorker2, tokenBalanceOfContractor)
         
+        
         let reviewerReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
-        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewer2)
+        let tokenBalanceOfReviewer = await dealTokenContract.balanceOf(reviewerMain)
         assert.equal(tokenBalanceOfReviewer, reviewerReward)
-
+        
         let platformReward = dealBudget * 5 / 100 / 100 // BPS 5 fee
         let tokenBalanceOfPlatform = await dealTokenContract.balanceOf(platform)
         assert.equal(tokenBalanceOfPlatform, platformReward)
@@ -489,13 +490,13 @@ contract('Deal. Base Test', async accounts => {
     it("should fail review actions", async() => {
         // wrong states
         await expectThrow(
-            dealContract.reviewOk({from: reviewer2})
+            dealContract.reviewOk({from: reviewerMain})
         )
         await expectThrow(
-            dealContract.reviewFailed({from: reviewer2})
+            dealContract.reviewFailed({from: reviewerMain})
         )
     })
-
+/*
     it("should fund new iteration", async() => {
         await dealTokenContract.approve(dealContract.address, 20000, {from: client})
         await dealContract.newIteration(20000, {from: client})

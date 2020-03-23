@@ -30,7 +30,6 @@ contract DealReviewStateLogic is BaseDealStateTransitioner,
         bool shouldPayReviewer = reviewDeadline > now;
         rewardActors(shouldPayReviewer);
 
-        contractorsReward = 0;
         currentState = States.WAIT4DEPOSIT;
         emit DealTaskReviewedPositively(now.toUint32());
     }

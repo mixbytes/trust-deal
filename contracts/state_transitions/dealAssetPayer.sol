@@ -50,14 +50,19 @@ contract DealPaymentsManager is DealDataRows {
         internal
     {
         rewardContractor();
+
         (uint256 platformReward, uint256 reviewerReward) = getPlatformReviewerRewards();
         rewardPlatform(platformReward);
         if (shouldRewardReviewer) rewardReviewer(reviewerReward);
 
-        dealBudget = dealBudget.sub(contractorsReward).sub(platformReward).sub(reviewerReward);
+        uint256 contractorsReward = budgetSpentOnIteration[iterationNumber];
+        dealBudget = dealBudget.sub(
+            contractorsReward.add(platformReward).add(reviewerReward)
+        );
     }
 
     function rewardContractor() internal {
+        uint256 contractorsReward = budgetSpentOnIteration[iterationNumber];
         sendAssetsTo(contractor, contractorsReward, ERROR_REWARD_TRANSFER_FAILED);
     }
 

@@ -17,7 +17,6 @@ contract DealDataRows {
 
     uint16 reviewerFeeBPS; // instead of reviewerReward
     uint16 platformFeeBPS; // instead of platformReward
-    uint256 contractorsReward;
 
     uint32 iterationDuration;
     uint32 iterationStart; // timestamp
