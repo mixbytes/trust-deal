@@ -392,7 +392,6 @@ contract('Deal. Base Test', async accounts => {
 
         // logging minutes over budget
         // budgetWithoutFees = 99900, worker1Rate = 1000 => maxMins = 99900 * 60 / 1000 = 5994
-        // TODO budgetWithoutFees does not containt platform fee
         await expectThrow(
             dealContract.logWork(block.timestamp, 5995, "mock", {from: worker1})
         )
@@ -402,13 +401,14 @@ contract('Deal. Base Test', async accounts => {
         let iterStat = await dealContract.getIterationStat()
         let totalStat = await dealContract.getTotalStat()
 
+        // iter 1 without reviewer fee
         assert.equal(iterStat.currentNumber, iterationNumber)
         assert.equal(iterStat.minutesLogged, 0)
-        assert.equal(iterStat.remainingBudget, 100000 - 50 - 50) // 50 = feeBPS/100 * dealBudget
-        assert.equal(iterStat.spentBudget, 100)
+        assert.equal(iterStat.remainingBudget, 100000 - 50) // 50 = feeBPS/100 * dealBudget
+        assert.equal(iterStat.spentBudget, 50)
 
         assert.equal(totalStat.totalMinutesLogged, 0)
-        assert.equal(totalStat.totalSpentBudget, 100)
+        assert.equal(totalStat.totalSpentBudget, 50)
     })
 
     it("should log work", async() => {
@@ -423,11 +423,11 @@ contract('Deal. Base Test', async accounts => {
 
         assert.equal(iterStat.currentNumber, iterationNumber)
         assert.equal(iterStat.minutesLogged, 120)
-        assert.equal(iterStat.remainingBudget, 100000 - 50 - 50 - 1000 - 1000) // 50 = feeBPS/100 * dealBudget
-        assert.equal(iterStat.spentBudget, 50 + 50 + 1000 + 1000)
+        assert.equal(iterStat.remainingBudget, 100000 - 50 - 1000 - 1000) // 50 = feeBPS/100 * dealBudget
+        assert.equal(iterStat.spentBudget, 50 + 1000 + 1000)
 
         assert.equal(totalStat.totalMinutesLogged, 120)
-        assert.equal(totalStat.totalSpentBudget, 50 + 50 + 1000 + 1000)
+        assert.equal(totalStat.totalSpentBudget, 50 + 1000 + 1000)
     })
 
     it("should fail finish iteration", async() => {
@@ -508,18 +508,17 @@ contract('Deal. Base Test', async accounts => {
         iterationNumber += 1;
     })
 
-    // TODO
     it("check deal stats before log", async() => {
         let iterStat = await dealContract.getIterationStat()
         let totalStat = await dealContract.getTotalStat()
 
         assert.equal(iterStat.currentNumber, iterationNumber)
         assert.equal(iterStat.minutesLogged, 0)
-        assert.equal(iterStat.remainingBudget, dealBudget - 58 - 58) // 50 = feeBPS/100/100 * dealBudget
-        assert.equal(iterStat.spentBudget, 58 + 58)
+        assert.equal(iterStat.remainingBudget, dealBudget - 58) // 50 = feeBPS/100/100 * dealBudget
+        assert.equal(iterStat.spentBudget, 58)
         
         assert.equal(totalStat.totalMinutesLogged, 120)
-        assert.equal(totalStat.totalSpentBudget, 50 + 50 + 1000 + 1000 + 58 + 58) // failing here, because 58*4
+        assert.equal(totalStat.totalSpentBudget, 50 + 50 + 1000 + 1000 + 58)
     })
 
     it("should log work", async() => {

@@ -11,6 +11,7 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsMa
     using SafeMath for uint32;
     using SafeMath for uint256;
 
+    event IterationFunded(uint32 when, uint256 howMuch);
     /**
      * @notice Actually, it could be considered safe against re-entrancy,
      * because function transfers rest of balance.
@@ -27,10 +28,12 @@ contract DealWait4DepositStateLogic is BaseDealStateTransitioner, DealPaymentsMa
     function newIteration(uint256 fundingAmount) external payable onlyClient {
         require(currentState == States.WAIT4DEPOSIT, ERROR_WRONG_STATE_CALL);
 
-        increaseDealBudget(fundingAmount);
+        iterationNumber = uint32(iterationNumber.add(1));
+        updateDealIterationBudget(fundingAmount, iterationNumber);
 
         iterationStart = now.toUint32();
-        iterationNumber = uint32(iterationNumber.add(1));
         currentState = States.ITERATION;
+
+        emit IterationFunded(iterationStart, fundingAmount);
     }
 }

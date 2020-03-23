@@ -25,9 +25,10 @@ contract DealPaymentsManager is DealDataRows {
         emit TransferedRestOfFunds(transferingAmount);
     }
 
-    function increaseDealBudget(uint256 fundingAmount) internal {
+    function updateDealIterationBudget(uint256 fundingAmount, uint32 iteration) internal {
         checkFundedAmount(fundingAmount);
         dealBudget = dealBudget.add(fundingAmount);
+        spentPlatformRewardsOnIteration[iteration] = dealBudget.mul(platformFeeBPS).div(10000);
     }
 
     function checkFundedAmount(uint256 fundingAmount) internal {
@@ -44,54 +45,52 @@ contract DealPaymentsManager is DealDataRows {
         }
     }
 
+    function getPotentialReviewerReward() internal view returns (uint256) {
+        return dealBudget.mul(reviewerFeeBPS).div(10000);
+    }
+
     function rewardActors(
         bool shouldRewardReviewer
     )
         internal
     {
-        rewardContractor();
-
-        (uint256 platformReward, uint256 reviewerReward) = getPlatformReviewerRewards();
+        uint256 contractorsReward = spentContractorsRewardsOnIteration[iterationNumber];
+        uint256 platformReward = spentPlatformRewardsOnIteration[iterationNumber];
+        rewardContractor(contractorsReward);
         rewardPlatform(platformReward);
-        if (shouldRewardReviewer) rewardReviewer(reviewerReward);
 
-        uint256 contractorsReward = budgetSpentOnIteration[iterationNumber];
-        dealBudget = dealBudget.sub(
-            contractorsReward.add(platformReward).add(reviewerReward)
-        );
+        uint256 reviewerReward;
+        if (shouldRewardReviewer) {
+            setReviewerReward();
+            reviewerReward = spentReviewerRewardsOnIteration[iterationNumber];
+            rewardReviewer(reviewerReward);
+        }
+        dealBudget = dealBudget.sub(contractorsReward).sub(platformReward).sub(reviewerReward);
     }
 
-    function rewardContractor() internal {
-        uint256 contractorsReward = budgetSpentOnIteration[iterationNumber];
-        sendAssetsTo(contractor, contractorsReward, ERROR_REWARD_TRANSFER_FAILED);
+    function rewardContractor(uint256 amount) private {
+        sendAssetsTo(contractor, amount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function getPlatformReviewerRewards() internal view returns (uint256, uint256) {
-        uint256 reviewerFeeAmount = dealBudget.mul(reviewerFeeBPS).div(10000);
-        uint256 platformFeeAmount = dealBudget.mul(platformFeeBPS).div(10000);
-        return (platformFeeAmount, reviewerFeeAmount);
+    function rewardPlatform(uint256 amount) private {
+        sendAssetsTo(platform, amount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function rewardPlatform(uint256 platformFeeAmount) internal {
-        sendAssetsTo(platform, platformFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
+    function rewardReviewer(uint256 amount) private {
+        sendAssetsTo(reviewer, amount, ERROR_REWARD_TRANSFER_FAILED);
     }
 
-    function rewardReviewer(uint256 reviewerFeeAmount) internal {
-        sendAssetsTo(reviewer, reviewerFeeAmount, ERROR_REWARD_TRANSFER_FAILED);
+    function setReviewerReward() private {
+        mapping (uint32 => uint256) storage sRROI = spentReviewerRewardsOnIteration;
+        sRROI[iterationNumber] = dealBudget.mul(reviewerFeeBPS).div(10000);
     }
 
-    function sendAssetsTo(address payable who, uint256 howMuch, string memory errorMsg) internal {
+    function sendAssetsTo(address payable who, uint256 howMuch, string memory errorMsg) private {
         if (address(dealMeanOfPayment) == address(0)) {
             bool success = who.send(howMuch);
             require(success, errorMsg);
         } else {
             require(dealMeanOfPayment.transfer(who, howMuch), errorMsg);
         }
-    }
-
-    function getFeesTotalAmount() internal view returns (uint256) {
-        // copy-past with review state function
-        (uint256 platformReward, uint256 reviewerReward) = getPlatformReviewerRewards();
-        return platformReward.add(reviewerReward);
     }
 }
