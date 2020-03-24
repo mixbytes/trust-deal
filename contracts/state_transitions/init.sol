@@ -27,6 +27,8 @@ contract DealInitStateLogic is BaseDealStateTransitioner {
 
         currentState = States.PROPOSED_REVIEWER;
 
+        registry.setDealForReviewer(reviewer, ITMIterativeDeal(address(this)));
+
         emit ReviewerProposed(reviewer, reviewerFeeBPS, reviewerDecisionDuration);
     }
 

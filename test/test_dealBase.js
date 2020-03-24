@@ -2,6 +2,7 @@ const { time } = require('openzeppelin-test-helpers');
 
 const Deal = artifacts.require("TMIterativeDeal");
 const DealToken = artifacts.require("DealToken");
+const DealsRegistry = artifacts.require("TMIterativeDealsRegistry");
 
 contract('Deal. Base Test', async accounts => {
     const States = {
@@ -23,6 +24,7 @@ contract('Deal. Base Test', async accounts => {
     const worker2 = accounts[5];
     const contractor2 = accounts[6];
     const platform = accounts[7];
+    const registryOwner = accounts[8];
 
     const reviewerFeeBPS = 5; // 5.div(100)
 
@@ -36,6 +38,7 @@ contract('Deal. Base Test', async accounts => {
 
     let dealContract;
     let dealTokenContract;
+    let dealsRegistry;
 
     let expectThrow = async (promise) => {
         try {
@@ -85,8 +88,9 @@ contract('Deal. Base Test', async accounts => {
     before('deploying deal and token', async() => {
         // Preparing and deploying token contract
         dealTokenContract = await DealToken.new({from: client});
+        dealsRegistry = await DealsRegistry.new({from: registryOwner});
         
-        dealContract = await Deal.new(platform, 5, {from: client});
+        dealContract = await Deal.new(platform, 5, dealsRegistry.address, {from: client, gas: 6742783});
     });
 
     it("should fail INIT", async() => {
@@ -120,6 +124,9 @@ contract('Deal. Base Test', async accounts => {
 
         currentState = await dealContract.getState({from: client});
         assert.equal(currentState, States.INIT)
+
+        let clientsDeals = await dealsRegistry.getDealsOfClient(client);
+        assert.equal(clientsDeals[0], dealContract.address)
     })
 
     it('should fail init second time', async() => {
@@ -156,6 +163,9 @@ contract('Deal. Base Test', async accounts => {
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)
+
+        let reviewer2Deals = await dealsRegistry.getDealsOfReviewer(reviewer2)
+        assert.equal(reviewer2Deals[0], dealContract.address)
     })
 
     it("should reset reviewer2 params", async() => {
@@ -177,6 +187,9 @@ contract('Deal. Base Test', async accounts => {
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.INIT)
+
+        let reviewer2Deals = await dealsRegistry.getDealsOfReviewer(reviewer2)
+        assert.equal(reviewer2Deals[0], dealContract.address)
     })
 
     it("should change state to PROPOSED_REVIEWER proposing reviewerMain", async() => {
@@ -184,6 +197,9 @@ contract('Deal. Base Test', async accounts => {
 
         contractState = await dealContract.getState({from: client});
         assert.equal(contractState, States.PROPOSED_REVIWER)
+
+        let reviewerMainDeals = await dealsRegistry.getDealsOfReviewer(reviewerMain)
+        assert.equal(reviewerMainDeals[0], dealContract.address)
     })
 
     it("should fail acception of reviewer conditions", async() => {
@@ -247,8 +263,24 @@ contract('Deal. Base Test', async accounts => {
     })
 
     it('should add new applications', async() => {
+        // TODO unfinished
+        await dealContract.newApplication("mock", [worker1, worker2], [2000, 2000], {from: contractor})
         await dealContract.newApplication("mock", [worker1, worker2], [1000, 1000], {from: contractor})
         await dealContract.newApplication("mock2", [worker1], [800], {from: contractor2})
+
+        let contractorDeals = await dealsRegistry.getDealsOfContractor(contractor)
+        assert.equal(contractorDeals.length, 1)
+        assert.equal(contractorDeals[0], dealContract.address)
+
+        let worker1Deals = await dealsRegistry.getDealsOfEmployee(worker1)
+        let worker2Deals = await dealsRegistry.getDealsOfEmployee(worker2)
+
+        assert.equal(worker1Deals.length, 1)
+        assert.equal(worker1Deals[0], dealContract.address)
+        assert.equal(worker2Deals[0], dealContract.address)
+
+        let contractor2Deals = await dealsRegistry.getDealsOfContractor(contractor2)
+        assert.equal(contractor2Deals[0], dealContract.address)
     })
 
     it("should fail cancel deal", async() => {

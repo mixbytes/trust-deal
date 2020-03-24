@@ -21,16 +21,24 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
             "Client or contractor can't add applications"
         );
 
+        updateEmployeesFlags(workers);
         applications[msg.sender] = Application(application);
+
         mapping(address => uint256) storage e = applications[msg.sender].employeesRates;
+        mapping(address => bool) storage f = applications[msg.sender].isStatedEmployeeFlag;
         for (uint8 i; i < workers.length; i++) {
             require(
                 workers[i] != address(0) && rates[i] != 0,
                 "Wrong application params: address or related rate are equal to 0"
             );
-            require(e[workers[i]] == 0, "Application state same worker twice");
+            require(f[workers[i]] == false, "Application states same worker twice");
             e[workers[i]] = rates[i];
+            f[workers[i]] = true;
         }
+
+        registry.setDealForContractor(msg.sender, ITMIterativeDeal(address(this)));
+        registry.setDealForEmployees(workers, ITMIterativeDeal(address(this)));
+
         emit ApplicationAdded(msg.sender, application, workers, rates);
     }
 
@@ -88,5 +96,15 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
             return false;
         }
         return true;
+    }
+
+    /// @dev Updates flags to perform uniqlize behaviour
+    function updateEmployeesFlags(address[] memory workers) internal {
+        mapping(address => bool) storage f = applications[msg.sender].isStatedEmployeeFlag;
+        for (uint8 i; i < workers.length; i++) {
+            if (hasProvidedApplication(msg.sender)) {
+                f[workers[i]] = false;
+            }
+        }
     }
 }

@@ -20,4 +20,18 @@ interface ITMIterativeDealsRegistry {
 
     /// @dev Lists deals which list `employee` in the workforce.
     function getDealsOfEmployee(address employee) external view returns (ITMIterativeDeal[] memory);
+
+    /// @notice Setters called by TMIterativeDeal
+
+    /// @dev Called to map client to deal
+    function setDealForClient(address client, ITMIterativeDeal deal) external;
+
+    /// @dev Called to map contractor to deal
+    function setDealForContractor(address contractor, ITMIterativeDeal deal) external;
+
+    /// @dev Called to map reviewer to deal
+    function setDealForReviewer(address reviewer, ITMIterativeDeal deal) external;
+
+    /// @dev Called to map employees to deal
+    function setDealForEmployees(address[] calldata employees, ITMIterativeDeal deal) external;
 }

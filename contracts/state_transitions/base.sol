@@ -3,6 +3,7 @@ pragma solidity 0.5.7;
 import '../../node_modules/openzeppelin-solidity/contracts/token/ERC20/IERC20.sol';
 
 import '../interfaces/ITMIterativeDeal.sol';
+import '../interfaces/ITMIterativeDealsRegistry.sol';
 
 contract DealDataRows {
     string taskShortName;
@@ -14,6 +15,7 @@ contract DealDataRows {
     address payable platform;
 
     IERC20 public dealMeanOfPayment;
+    ITMIterativeDealsRegistry registry;
 
     uint16 reviewerFeeBPS; // instead of reviewerReward
     uint16 platformFeeBPS; // instead of platformReward
@@ -34,6 +36,7 @@ contract DealDataRows {
     struct Application {
         string description;
         mapping (address => uint256) employeesRates;
+        mapping (address => bool) isStatedEmployeeFlag;
     }
     mapping (address => Application) applications;
 }
@@ -93,6 +96,8 @@ contract BaseDealStateTransitioner is DealDataRows, ITMIterativeDeal {
         dealMeanOfPayment = meanOfPayment;
 
         currentState = States.INIT;
+
+        registry.setDealForClient(msg.sender, ITMIterativeDeal(address(this)));
 
         emit DealInitialized(msg.sender, shortName, task, iterationTimeSeconds, meanOfPayment);
     }

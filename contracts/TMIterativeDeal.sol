@@ -4,7 +4,13 @@ import './state_transitions/mainTransitioner.sol';
 import './interfaces/IDealVersioning.sol';
 
 contract TMIterativeDeal is MainDealStateTransitioner, IDealVersioning {
-    constructor(address payable platformAddress, uint16 platformFeeInBIPS) public {
+    constructor(
+        address payable platformAddress,
+        uint16 platformFeeInBIPS,
+        ITMIterativeDealsRegistry dealsRegistry
+    )
+        public
+    {
         require(platformAddress != address(0), ERROR_ZERO_ADDRESS);
         require(
             platformFeeInBIPS > 0 && platformFeeInBIPS < 10000,
@@ -13,6 +19,7 @@ contract TMIterativeDeal is MainDealStateTransitioner, IDealVersioning {
         client = msg.sender;
         platform = platformAddress;
         platformFeeBPS = platformFeeInBIPS;
+        registry = dealsRegistry;
     }
 
     function getDealType() external pure returns (string memory) {

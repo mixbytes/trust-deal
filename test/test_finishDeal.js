@@ -2,6 +2,7 @@ const { time } = require('openzeppelin-test-helpers');
 
 const Deal = artifacts.require("TMIterativeDeal");
 const DealToken = artifacts.require("DealToken");
+const DealsRegistry = artifacts.require("TMIterativeDealsRegistry");
 
 contract('Deal. Finish at W4D state', async accounts => {
     const States = {
@@ -23,6 +24,7 @@ contract('Deal. Finish at W4D state', async accounts => {
     const worker2 = accounts[5];
     const contractor2 = accounts[6];
     const platform = accounts[7];
+    const registryOwner = accounts[8];
 
     const reviewerFeeBPS = 5; // 5.div(10000)
 
@@ -54,8 +56,9 @@ contract('Deal. Finish at W4D state', async accounts => {
     before('deploying deal and token', async() => {
         // Preparing and deploying token contract
         dealTokenContract = await DealToken.new({from: client});
+        let dealsRegistry = await DealsRegistry.new({from: registryOwner});
         
-        dealContract = await Deal.new(platform, 5, {from: client});
+        dealContract = await Deal.new(platform, 5, dealsRegistry.address, {from: client, gas: 6742783});
     });
 
     it("should fail INIT", async() => {
