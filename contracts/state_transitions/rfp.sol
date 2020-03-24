@@ -90,14 +90,6 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         reviewIntervalSeconds = reviewerDecisionDuration;
     }
 
-    function hasProvidedApplication(address checkingContractor) internal view returns (bool) {
-        Application storage a = applications[checkingContractor];
-        if (bytes(a.description).length == 0) {
-            return false;
-        }
-        return true;
-    }
-
     /// @dev Updates flags to perform uniqlize behaviour
     function updateEmployeesFlags(address[] memory workers) internal {
         mapping(address => bool) storage f = applications[msg.sender].isStatedEmployeeFlag;
@@ -106,5 +98,13 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
                 f[workers[i]] = false;
             }
         }
+    }
+
+    function hasProvidedApplication(address checkingContractor) internal view returns (bool) {
+        Application storage a = applications[checkingContractor];
+        if (bytes(a.description).length == 0) {
+            return false;
+        }
+        return true;
     }
 }
