@@ -1,7 +1,7 @@
 # trust-deal
 
 ## To be done:
-1) implement DealsRegistry
+1) Optimizations and security changes in accordance to what was stated in tech docs
 
 ## Test
 Run local tests with:
