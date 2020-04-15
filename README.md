@@ -6,7 +6,7 @@
 ## Test
 Run local tests with:
 ```
-ganache-cli -p 7545 -i 5777 --allowUnlimitedContractSize  --gasLimit 0xFFFFFFFFFFFF
+ganache-cli -p 7545 -i 5777 
 npx truffle migrate --reset --network development
 npx truffle test --network development
 

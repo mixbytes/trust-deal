@@ -55,7 +55,7 @@ contract('Deal. Cancel RFP', async accounts => {
         dealTokenContract = await DealToken.new({from: client});
         let dealsRegistry = await DealsRegistry.new({from: registryOwner});
         
-        dealContract = await Deal.new(platform, 5, dealsRegistry.address, {from: client, gas: 6742783});
+        dealContract = await Deal.new(platform, 5, dealsRegistry.address, {from: client});
     });
 
     it("should fail INIT", async() => {
