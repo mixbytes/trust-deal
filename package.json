@@ -19,6 +19,9 @@
     "truffle-hdwallet-provider": "1.0.17",
     "minimist": ">=1.2.2"
   },
+  "devDependencies": {
+    "ganache-cli": "^6.9.1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mixbytes/trust-deal.git"
