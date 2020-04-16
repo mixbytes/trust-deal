@@ -60,7 +60,13 @@ module.exports = {
     rinkeby: {
       provider: () => new HDWalletProvider(process.env.RINKEBY_PRIVATE_KEY, 'https://rinkeby.infura.io/v3/' + process.env.INFURA_API_KEY),
       network_id: 4,
-    }
+    },
+
+    dapp: {
+      host: "127.0.0.1",     // Localhost (default: none)
+      port: 8545,            // Standard Ethereum port (default: none)
+      network_id: 10100,
+    },
 
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
