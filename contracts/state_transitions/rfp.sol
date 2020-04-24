@@ -78,7 +78,6 @@ contract DealRFPStateLogic is BaseDealStateTransitioner {
         uint16 feeBPS,
         uint32 reviewIntervalSeconds
     ) {
-        require(currentState >= States.RFP, ERROR_WRONG_STATE_CALL);
         state = currentState;
         dealClient = client;
         shortName = taskShortName;
